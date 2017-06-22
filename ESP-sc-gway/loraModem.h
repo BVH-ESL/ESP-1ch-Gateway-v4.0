@@ -290,6 +290,7 @@ volatile uint8_t mask;
 #define PKT_PULL_DATA				0x02
 #define PKT_PULL_RESP				0x03
 #define PKT_PULL_ACK				0x04
+#define PKT_TX_ACK                  0x05
 
 #define MGT_RESET					0x15	// Not a LoRa Gateway Spec message
 #define MGT_SET_SF					0x16

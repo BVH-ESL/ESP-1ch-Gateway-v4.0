@@ -534,17 +534,26 @@ int readUdp(int packetSize, uint8_t * buff_down)
 		buff_up[0]=buff_down[0];
 		buff_up[1]=buff_down[1];
 		buff_up[2]=buff_down[2];
-		buff_up[3]=PKT_PULL_ACK;
-		buff_up[4]=0;
+		//buff_up[3]=PKT_PULL_ACK;				// Pull request/Change of Mogyi
+		buff_up[3]=PKT_TX_ACK;
+		buff_up[4]=MAC_array[0];
+		buff_up[5]=MAC_array[1];
+		buff_up[6]=MAC_array[2];
+		buff_up[7]=0xFF;
+		buff_up[8]=0xFF;
+		buff_up[9]=MAC_array[3];
+		buff_up[10]=MAC_array[4];
+		buff_up[11]=MAC_array[5];
+		buff_up[12]=0;
 		
 		// Only send the PKT_PULL_ACK to the UDP socket that just sent the data!!!
 		Udp.beginPacket(remoteIpNo, remotePortNo);
-		if (Udp.write((char *)buff_up, 4) != 4) {
+		if (Udp.write((char *)buff_up, 12) != 12) {
 			Serial.println("PKT_PULL_ACK:: Error writing Ack");
 		}
 		else {
 			if (debug>=1) {
-				Serial.print(F("PKT_PULL_ACK:: tmst="));
+				Serial.print(F("PKT_TX_ACK:: tmst="));
 				Serial.println(micros());
 			}
 		}
