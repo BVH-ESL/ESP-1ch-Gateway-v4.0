@@ -115,20 +115,16 @@
 // your can define _THINGSPORT and _THINGSERVER
 // If not, make sure that you do not defined these.
 // Port is UDP port in this program
-//#define _THINGPORT 5001					// pir.things4u.eu; 
-//#define _THINGPORT 1701					// udp @ westenberg.org
-//#define _THINGPORT 1701					// iss.things4u.eu
-//#define _THINGPORT 56284					// adoorn.things4u.eu
-//#define _THINGPORT 56084					// udp.things4u.eu
-#define _THINGPORT 57084					// dash.westenberg.org:8057
-#define _THINGSERVER "westenberg.org"		// Server URL of the LoRa-udp.js handler
+
+#define _THINGPORT 1700						// dash.westenberg.org:8057
+#define _THINGSERVER "yourserver.com"		// Server URL of the LoRa-udp.js handler
 
 // Gateway Ident definitions
 #define _DESCRIPTION "ESP Gateway"
-#define _EMAIL "mw12554@hotmail.com"
+#define _EMAIL "your_email@gmail.com"
 #define _PLATFORM "ESP8266"
-#define _LAT 52.237367
-#define _LON 5.978654
+#define _LAT 52.00
+#define _LON 5.800
 #define _ALT 14
 								
 // Definitions for the admin webserver
@@ -151,8 +147,8 @@
 
 #if GATEWAYNODE==1
 #define _DEVADDR { 0x26, 0x01, 0x15, 0x3D }
-#define _APPSKEY { 0x02, 0x02, 0x04, 0x20, 0x00, 0x00, 0x00, 0x00, 0x54, 0x68, 0x69, 0x6E, 0x67, 0x73, 0x34, 0x55 }
-#define _NWKSKEY { 0x54, 0x68, 0x69, 0x6E, 0x67, 0x73, 0x34, 0x55, 0x54, 0x68, 0x69, 0x6E, 0x67, 0x73, 0x34, 0x55 }
+#define _APPSKEY { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }
+#define _NWKSKEY { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }
 #define _SENSOR_INTERVAL 300
 #endif
 
@@ -170,12 +166,8 @@ struct wpas {
 
 wpas wpa[] = {
 	{ "" , "" },
-	{ "Livebox-0e0d", "E2D92F37634C512F712E3DCC1E"},
-//	{ "GLGK_Public","draadloosinternet" },
-	{ "OnePlus2", "maanlama@16" },
-	{ "platenspeler", "maanlama@16" },
-//	{ "bushhouse", "bush1967" },
-//	{ "Maarten-in", "apeldoorn47" },
+	{ "your_router_1", "1st_password"},
+	{ "your_router_2", "2n_password"},
 	{ "", ""}									// spare line
 };
 
