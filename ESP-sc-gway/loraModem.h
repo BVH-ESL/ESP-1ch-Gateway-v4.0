@@ -1,7 +1,7 @@
 // 1-channel LoRa Gateway for ESP8266
 // Copyright (c) 2016, 2017 Maarten Westenberg version for ESP8266
-// Verison 4.0.2
-// Date: 2017-01-29
+// Version 4.0.3
+// Date: 2017-06-16
 //
 // 	based on work done by Thomas Telkamp for Raspberry PI 1ch gateway
 //	and many other contributors.
@@ -55,6 +55,7 @@ state_t _state;
 // In order to make the CAD behaviour dynamic we set a variable
 // when the CAD functions are defined.
 #define NUM_HOPS 3
+
 bool _cad= (bool) _CAD;		// Set to true for Channel Activity Detection, only when dio1 connected
 bool _hop=false;		// experimental; frequency hopping. Only use when dio2 connected
 bool inHop=false;

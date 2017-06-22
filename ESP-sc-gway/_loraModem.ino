@@ -1,7 +1,7 @@
 // 1-channel LoRa Gateway for ESP8266
 // Copyright (c) 2016, 2017 Maarten Westenberg version for ESP8266
-// Verison 4.0.2
-// Date: 2017-01-29
+// Version 4.0.3
+// Date: 2017-06-16
 //
 // 	based on work done by Thomas Telkamp for Raspberry PI 1ch gateway
 //	and many others.
@@ -424,7 +424,7 @@ void rxLoraModem()
     writeRegister(REG_IRQ_FLAGS, 0xFF);
 	
 	// Accept no interrupts except RXDONE
-	writeRegister(REG_IRQ_FLAGS_MASK, ~(IRQ_LORA_RXDONE_MASK | IRQ_LORA_RXTOUT_MASK));
+	writeRegister(REG_IRQ_FLAGS_MASK, (uint8_t) ~(IRQ_LORA_RXDONE_MASK | IRQ_LORA_RXTOUT_MASK));
 
 	// set frequency hopping
 	if (_hop) {
@@ -704,6 +704,12 @@ int buildPacket(uint32_t tmst, uint8_t *buff_up, uint8_t *message, char messageL
 	lastTmst = tmst;									// Following/according to spec
 	int buff_index=0;
 	
+		
+#if _CHECK_MIC==1
+	unsigned char NwkSKey[16] = _NWKSKEY ;
+	checkMic(message, messageLength, NwkSKey);
+#endif
+
 	// Read SNR and RSSI from the register. Note: Not for internal sensors!
 	// For internal sensor we fake these values as we cannot read a register
 	if (internal) {
@@ -741,9 +747,8 @@ int buildPacket(uint32_t tmst, uint8_t *buff_up, uint8_t *message, char messageL
 	statr[0].prssi = prssi-rssicorr;
 	statr[0].rssi = readRegister(0x1B)-rssicorr;
 	statr[0].sf = readRegister(REG_MODEM_CONFIG2) >> 4;\
-	statr[0].node = ( message[4]<<24 | message[3]<<16 | message[2]<<8 | message[1] );
-	//sprintf(statr[0].node, "%02X %02X %02X %02X", 
-	//	message[4], message[3], message[2], message[1]);
+	statr[0].node = ( message[1]<<24 | message[2]<<16 | message[3]<<8 | message[4] );
+	//sprintf(statr[0].node, "%02X %02X %02X %02X", message[4], message[3], message[2], message[1]);
 #if STATISTICS >= 2
 	switch (statr[0].sf) {
 		case SF7: statc.sf7++; break;
@@ -960,7 +965,6 @@ int receivePacket(uint8_t * buff_up)
 		uint32_t tmst = (uint32_t) micros();				// Only microseconds, rollover in 
 		lastTmst = tmst;									// Following/according to spec
 		
-
 		// Handle the physical data read from FiFo
         if((messageLength = receivePkt(message)) > 0){
 		
@@ -1256,7 +1260,7 @@ void Interrupt_1()
 			writeRegister(REG_DIO_MAPPING_1, MAP_DIO0_LORA_RXDONE | MAP_DIO1_LORA_RXTOUT);
 			
 			// Accept no interrupts except RXDONE or RXTOUT
-			writeRegister(REG_IRQ_FLAGS_MASK, ~(IRQ_LORA_RXDONE_MASK | IRQ_LORA_RXTOUT_MASK));
+			writeRegister(REG_IRQ_FLAGS_MASK, (uint8_t) ~(IRQ_LORA_RXDONE_MASK | IRQ_LORA_RXTOUT_MASK));
 			
 			//writeRegister(REG_IRQ_FLAGS, IRQ_LORA_CDDETD_MASK );
 			writeRegister(REG_IRQ_FLAGS, 0xFF );	// reset CAD Detect interrupt flags
@@ -1300,7 +1304,7 @@ void Interrupt_1()
 				printState(3);
 			}
 			// reset RX Timeout interrupt flags
-			writeRegister(REG_IRQ_FLAGS_MASK, ~(IRQ_LORA_CDDETD_MASK | IRQ_LORA_RXTOUT_MASK));
+			writeRegister(REG_IRQ_FLAGS_MASK, (uint8_t) ~(IRQ_LORA_CDDETD_MASK | IRQ_LORA_RXTOUT_MASK));
 			
 			// Set the modem for next receive action. This must be done before
 			// scanning takes place as we cannot do it once RXDETTD is set.

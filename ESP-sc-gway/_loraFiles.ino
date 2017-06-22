@@ -1,7 +1,7 @@
 // 1-channel LoRa Gateway for ESP8266
 // Copyright (c) 2016, 2017 Maarten Westenberg version for ESP8266
-// Verison 4.0.2
-// Date: 2017-01-29
+// Version 4.0.3
+// Date: 2017-06-16
 //
 // 	based on work done by Thomas Telkamp for Raspberry PI 1ch gateway
 //	and many others.
@@ -101,7 +101,7 @@ int writeGwayCfg(const char *fn) {
 	gwayConfig.sf = (uint8_t) sf;
 	gwayConfig.ssid = WiFi.SSID();
 	//gwayConfig.pass = WiFi.PASS();					// XXX We should find a way to store the password too
-	gwayConfig.ch = ifreq;						// XXX
+	gwayConfig.ch = ifreq;
 	gwayConfig.debug = debug;
 	gwayConfig.cad = _cad;
 	gwayConfig.hop = _hop;
@@ -138,19 +138,6 @@ int writeConfig(const char *fn, struct espGwayConfig *c) {
 	f.print("DEBUG"); f.print('='); f.print((*c).debug); f.print('\n');
 	f.print("CAD");  f.print('='); f.print((*c).cad); f.print('\n');
 	f.print("HOP");  f.print('='); f.print((*c).hop); f.print('\n');
-	
-	if (debug>=2){
-		Serial.print(F("SSID=")); Serial.println((*c).ssid);
-		Serial.print(F("PASS=")); Serial.println((*c).pass);
-		Serial.print(F("FREQ=")); Serial.println((*c).ch);
-		Serial.print(F("SF  =")); Serial.println((*c).sf);
-		Serial.print(F("FCNT=")); Serial.println((*c).fcnt);
-		Serial.print(F("DBUG=")); Serial.println((*c).debug);
-		Serial.print(F("CAD =")); Serial.println((*c).cad);
-		Serial.print(F("HOP =")); Serial.println((*c).hop);
-	}
-	
-	Serial.println(F("writeConfig:: done"));
 	
 	f.close();
 	return(1);

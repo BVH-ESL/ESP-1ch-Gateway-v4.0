@@ -1,7 +1,7 @@
 // 1-channel LoRa Gateway for ESP8266
 // Copyright (c) 2016, 2017 Maarten Westenberg version for ESP8266
-// Verison 4.0.2
-// Date: 2017-01-29
+// Version 4.0.3
+// Date: 2017-06-16
 //
 // 	based on work done by Thomas Telkamp for Raspberry PI 1ch gateway
 //	and many others.
@@ -14,6 +14,20 @@
 // Author: Maarten Westenberg (mw12554@hotmail.com)
 //
 // This file contains the webserver code for the ESP Single Channel Gateway.
+
+// Note:
+// The ESP Webserver works with Strings to display html content. 
+// Care must be taken that not all data is output to the webserver in one string
+// as this will use a LOT of memory and possibly kill the heap (cause system
+// crash or other unreliable behaviour.
+// Instead, output of the various tables on the webpage should be displayed in
+// chucks so that strings are limited in size.
+// Be aware that using no strings but only sendContent() calls has its own
+// disadvantage that these calls take a lot of time and cause the page to be
+// displayed like an old typewriter.
+// So, the trick is to make chucks that are sent to the website by using
+// a response String but not make those Strings too big.
+
 
 #if A_SERVER==1
 
@@ -78,6 +92,31 @@ String stringTime(unsigned long t) {
 	res += _second;
 	return (res);
 }
+
+// ----------------------------------------------------------------------------
+// OPEN WEB PAGE
+//	This is the init function for opening the webpage
+//
+// ----------------------------------------------------------------------------
+static void openWebPage()
+{
+	String response="";
+	server.setContentLength(CONTENT_LENGTH_UNKNOWN);
+	server.send(200, "text/html", "");
+	
+	// init webserver, fill the webpage
+	// NOTE: The page is renewed every _WWW_INTERVAL seconds, please adjust in ESP-sc-gway.h1
+	//
+	response += String() + "<!DOCTYPE HTML><HTML><HEAD><meta http-equiv='refresh' content='"+_WWW_INTERVAL+"'><TITLE>ESP8266 1ch Gateway</TITLE>";
+	response += "<style>.thead {background-color:green; color:white;} ";
+	response += ".cell {border: 1px solid black;}";
+	response += ".config_table {max_width:100%; min-width:400px; width:90%; border:1px solid black; border-collapse:collapse;}";
+	response += "</style></HEAD><BODY>";
+	
+	server.sendContent(response);
+}
+
+
 
 
 // ----------------------------------------------------------------------------
@@ -182,18 +221,7 @@ String WifiServer(const char *cmd, const char *arg) {
 
 	delay(5);
 	
-	// ========================================================================
-	// Do webserver work, fill the webpage
-	response +="<!DOCTYPE HTML>";
-	response +="<HTML><HEAD>";
-	response +="<TITLE>ESP8266 1ch Gateway</TITLE>";
-	response +="<style>";
-	response +=".thead {background-color:green; color:white;}";
-	response +=".cell {border: 1px solid black;}";
-	response +=".config_table {max_width:100%; min-width:400px; width:90%; border:1px solid black; border-collapse:collapse;}";
-	response +="</style>";
-	response +="</HEAD>";
-	response +="<BODY>";
+
 		
 	response +="<h1>ESP Gateway Config</h1>";
 	response +="Version: "; response+=VERSION;
@@ -236,11 +264,12 @@ String WifiServer(const char *cmd, const char *arg) {
 	}
 	else {
 		response += sf;
-		response +="<td class=\"cell\"><a href=\"SF=1\"><button>+</button></a></td>";
 		response +="<td class=\"cell\"><a href=\"SF=-1\"><button>-</button></a></td>";
+		response +="<td class=\"cell\"><a href=\"SF=1\"><button>+</button></a></td>";
 	}
 	response +="</tr>";
 	
+	// Channel
 	response +="<tr><td class=\"cell\">Channel</td>";
 	response +="<td class=\"cell\">"; 
 	if (_hop == 1) {
@@ -249,15 +278,15 @@ String WifiServer(const char *cmd, const char *arg) {
 	else {
 		response+=ifreq; 
 		response+="</td>";
-		response +="<td class=\"cell\"><a href=\"FREQ=1\"><button>+</button></a></td>";
 		response +="<td class=\"cell\"><a href=\"FREQ=-1\"><button>-</button></a></td>";
+		response +="<td class=\"cell\"><a href=\"FREQ=1\"><button>+</button></a></td>";
 	}
 	response +="</tr>";
 	
 	response +="<tr><td class=\"cell\">Timing Correction (uSec)</td><td class=\"cell\">"; response += txDelay; 
 	response+="</td>";
-	response +="<td class=\"cell\"><a href=\"DELAY=1\"><button>+</button></a></td>";
 	response +="<td class=\"cell\"><a href=\"DELAY=-1\"><button>-</button></a></td>";
+	response +="<td class=\"cell\"><a href=\"DELAY=1\"><button>+</button></a></td>";
 	response+="</tr>";	
 #endif
 
@@ -266,8 +295,8 @@ String WifiServer(const char *cmd, const char *arg) {
 	response +="Debug level</td><td class=\"cell\">"; 
 	response +=debug; 
 	response +="</td>";
-	response +="<td class=\"cell\"><a href=\"DEBUG=1\"><button>+</button></a></td>";
 	response +="<td class=\"cell\"><a href=\"DEBUG=-1\"><button>-</button></a></td>";
+	response +="<td class=\"cell\"><a href=\"DEBUG=1\"><button>+</button></a></td>";
 	response +="</tr>";
 	
 #if GATEWAYNODE==1
@@ -293,126 +322,18 @@ String WifiServer(const char *cmd, const char *arg) {
 	
 	delay(1);
 
-	
-	
-	// ------------------------------------------------------------------------
-	response +="<h2>Statistics</h2>";
-	
-	delay(1);
-	response +="<table class=\"config_table\">";
-	response +="<tr>";
-	response +="<th class=\"thead\">Counter</th>";
-	response +="<th class=\"thead\">Value</th>";
-	response +="</tr>";
-	response +="<tr><td class=\"cell\">Packages Uplink Total</td><td class=\"cell\">";
-		response +=cp_nb_rx_rcv; response+="</tr>";
-	response +="<tr><td class=\"cell\">Packages Uplink OK </td><td class=\"cell\">";
-		response +=cp_nb_rx_ok; response+="</tr>";
-	response +="<tr><td class=\"cell\">Packages Downlink</td><td class=\"cell\">"; response +=cp_up_pkt_fwd; response+="</tr>";
+	return (response);
+}
 
-
-#if STATISTICS >= 2
-	response +="<tr><td class=\"cell\">SF7 rcvd</td>"; response +="<td class=\"cell\">"; response +=statc.sf7; response +="</td></tr>";
-	response +="<tr><td class=\"cell\">SF8 rcvd</td>"; response +="<td class=\"cell\">"; response +=statc.sf8; response +="</td></tr>";
-	response +="<tr><td class=\"cell\">SF9 rcvd</td>"; response +="<td class=\"cell\">"; response +=statc.sf9; response +="</td></tr>";
-	response +="<tr><td class=\"cell\">SF10 rcvd</td>"; response +="<td class=\"cell\">"; response +=statc.sf10; response +="</td></tr>";
-	response +="<tr><td class=\"cell\">SF11 rcvd</td>"; response +="<td class=\"cell\">"; response +=statc.sf11; response +="</td></tr>";
-	response +="<tr><td class=\"cell\">SF12 rcvd</td>"; response +="<td class=\"cell\">"; response +=statc.sf12; response +="</td></tr>";
-#endif
-	response +="</table>";
-
-
-	
-#if STATISTICS >= 1
-	// ------------------------------------------------------------------------
-	response +="<h2>Message History</h2>";
-	
-	response +="<table class=\"config_table\">";
-	response +="<tr>";
-	response +="<th class=\"thead\">Time</th>";
-	response +="<th class=\"thead\">Node</th>";
-	response +="<th class=\"thead\" colspan=\"2\">Channel</th>";
-	response +="<th class=\"thead\" style=\"width: 50px;\">SF</th>";
-	response +="<th class=\"thead\" style=\"width: 50px;\">RSSI</th>";
-	response +="<th class=\"thead\" style=\"width: 50px;\">pRSSI</th>";
-	response +="</tr>";
-	for (int i=0; i<MAX_STAT; i++) {
-		if (statr[i].sf == 0) break;
-		
-		response +="<tr>";
-		response +="<td class=\"cell\">"; response+=stringTime(statr[i].tmst); response+="</td>";
-		
-		response +="<td class=\"cell\">"; 
-		//response +=statr[i].node; 
-		//unsigned char m;
-		//m = (statr[i].node>>24)&0xFF; if (m<16) response += "0"; response +=String(m,HEX); response += " ";
-		//m = (statr[i].node>>16)&0xFF; if (m<16) response += "0"; response += String(m,HEX); response += " ";
-		//m = (statr[i].node>>8)&0xFF; if (m<16) response += "0"; response += String(m,HEX); response += " ";
-		//m = (statr[i].node)&0xFF; if (m<16) response += "0"; response += String(m,HEX); response += " ";
-		response += printHEX((char *)(& (statr[i].node)),' ');
-		response +="</td>";
-		
-		response +="<td class=\"cell\">"; response +=statr[i].ch; response +="</td>";
-		
-		response +="<td class=\"cell\">"; response +=freqs[statr[i].ch]; response +="</td>";
-		
-		response +="<td class=\"cell\">"; response +=statr[i].sf; response +="</td>";
-		
-		response +="<td class=\"cell\">"; response+=statr[i].rssi; response+="</td>";
-		
-		response +="<td class=\"cell\">"; response+=statr[i].prssi; response+="</td>";
-		response +="</tr>";
-	}
-	response +="</table>";
-#endif
-
-	
-	// ------------------------------------------------------------------------
-	response +="<h2>System Status</h2>";
-	
-	response +="<table class=\"config_table\">";
-	response +="<tr>";
-	response +="<th class=\"thead\">Parameter</th>";
-	response +="<th class=\"thead\">Value</th>";
-	response +="</tr>";
-	response +="<tr><td style=\"border: 1px solid black; width:120px;\">Gateway ID</td>";
-	response +="<td class=\"cell\">";	
-	  if (MAC_array[0]< 0x10) response +='0'; response +=String(MAC_array[0],HEX);	// The MAC array is always returned in lowercase
-	  if (MAC_array[1]< 0x10) response +='0'; response +=String(MAC_array[1],HEX);
-	  if (MAC_array[2]< 0x10) response +='0'; response +=String(MAC_array[2],HEX);
-	  response +="FFFF"; 
-	  if (MAC_array[3]< 0x10) response +='0'; response +=String(MAC_array[3],HEX);
-	  if (MAC_array[4]< 0x10) response +='0'; response +=String(MAC_array[4],HEX);
-	  if (MAC_array[5]< 0x10) response +='0'; response +=String(MAC_array[5],HEX);
-	response+="</tr>";
-	response +="<tr><td class=\"cell\">Free heap</td><td class=\"cell\">"; response+=ESP.getFreeHeap(); response+="</tr>";
-	response +="<tr><td class=\"cell\">ESP Chip ID</td><td class=\"cell\">"; response+=ESP.getChipId(); response+="</tr>";
-	
-	response +="</table>";
-
-	// ------------------------------------------------------------------------
-	response +="<h2>WiFi Config</h2>";
-
-	response +="<table class=\"config_table\">";
-	response +="<tr>";
-	response +="<th class=\"thead\">Parameter</th>";
-	response +="<th class=\"thead\">Value</th>";
-	response +="</tr>";
-	response +="<tr><td class=\"cell\">WiFi SSID</td><td class=\"cell\">"; response+=WiFi.SSID(); response+="</tr>";
-	response +="<tr><td class=\"cell\">IP Address</td><td class=\"cell\">"; response+=printIP((IPAddress)WiFi.localIP(),'.'); response+="</tr>";
-	response +="<tr><td class=\"cell\">IP Gateway</td><td class=\"cell\">"; response+=printIP((IPAddress)WiFi.gatewayIP(),'.'); response+="</tr>";
-	response +="<tr><td class=\"cell\">NTP Server</td><td class=\"cell\">"; response+=NTP_TIMESERVER; response+="</tr>";
-	response +="<tr><td class=\"cell\">LoRa Router</td><td class=\"cell\">"; response+=_TTNSERVER; response+="</tr>";
-	response +="<tr><td class=\"cell\">LoRa Router IP</td><td class=\"cell\">"; response+=printIP((IPAddress)ttnServer,'.'); response+="</tr>";
-#ifdef _THINGSERVER
-	response +="<tr><td class=\"cell\">LoRa Router 2</td><td class=\"cell\">"; response+=_THINGSERVER; 
-		response += ":"; response += String(_THINGPORT); response+="</tr>";
-	response +="<tr><td class=\"cell\">LoRa Router 2 IP</td><td class=\"cell\">"; response+=printIP((IPAddress)thingServer,'.'); response+="</tr>";
-#endif
-	response +="</table>";
-
-	// ------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// INTERRUPT DATA
+// Display inteerupt data, but only for debug >= 2
+//
+// ----------------------------------------------------------------------------
+static void interruptData()
+{
 	if (debug >= 2) {
+		String response="";
 		
 		response +="<h2>System State and Interrupt</h2>";
 		
@@ -444,29 +365,200 @@ String WifiServer(const char *cmd, const char *arg) {
 		if (mask <16) response += "0";
 		response+=String(mask,HEX); response+="</td></tr>";
 		response +="</table>";
+		
+		server.sendContent(response);
 	}
+}
 
-	// ------------------------------------------------------------------------
-	response +="<br><br />";
-	response +="Click <a href=\"/HELP\">here</a> to explain Help and REST options<br>";
-	response +="</BODY></HTML>";
 
-	delay(3);
+// ----------------------------------------------------------------------------
+// STATISTICS DATA
+//
+// ----------------------------------------------------------------------------
+static void statisticsData()
+{
+	String response="";
 
-	return (response);
+	response +="<h2>Statistics</h2>";
+	
+	delay(1);
+	response +="<table class=\"config_table\">";
+	response +="<tr>";
+	response +="<th class=\"thead\">Counter</th>";
+	response +="<th class=\"thead\">Value</th>";
+	response +="</tr>";
+	response +="<tr><td class=\"cell\">Packages Uplink Total</td><td class=\"cell\">";
+		response +=cp_nb_rx_rcv; response+="</tr>";
+	response +="<tr><td class=\"cell\">Packages Uplink OK </td><td class=\"cell\">";
+		response +=cp_nb_rx_ok; response+="</tr>";
+	response +="<tr><td class=\"cell\">Packages Downlink</td><td class=\"cell\">"; response +=cp_up_pkt_fwd; response+="</tr>";
+
+#if STATISTICS >= 2
+	response +="<tr><td class=\"cell\">SF7 rcvd</td>"; response +="<td class=\"cell\">"; response +=statc.sf7; response +="</td></tr>";
+	response +="<tr><td class=\"cell\">SF8 rcvd</td>"; response +="<td class=\"cell\">"; response +=statc.sf8; response +="</td></tr>";
+	response +="<tr><td class=\"cell\">SF9 rcvd</td>"; response +="<td class=\"cell\">"; response +=statc.sf9; response +="</td></tr>";
+	response +="<tr><td class=\"cell\">SF10 rcvd</td>"; response +="<td class=\"cell\">"; response +=statc.sf10; response +="</td></tr>";
+	response +="<tr><td class=\"cell\">SF11 rcvd</td>"; response +="<td class=\"cell\">"; response +=statc.sf11; response +="</td></tr>";
+	response +="<tr><td class=\"cell\">SF12 rcvd</td>"; response +="<td class=\"cell\">"; response +=statc.sf12; response +="</td></tr>";
+#endif
+	response +="</table>";
+
+	server.sendContent(response);
 }
 
 // ----------------------------------------------------------------------------
-// Call the webserver
+// WIFIDATA
+// Display the most important Wifi parameters gathered
+//
+// ----------------------------------------------------------------------------
+static void wifiData()
+{
+	String response="";
+	response +="<h2>WiFi Config</h2>";
+
+	response +="<table class=\"config_table\">";
+	response +="<tr>";
+	response +="<th class=\"thead\">Parameter</th>";
+	response +="<th class=\"thead\">Value</th>";
+	response +="</tr>";
+	response +="<tr><td class=\"cell\">WiFi SSID</td><td class=\"cell\">"; response+=WiFi.SSID(); response+="</tr>";
+	response +="<tr><td class=\"cell\">IP Address</td><td class=\"cell\">"; response+=printIP((IPAddress)WiFi.localIP(),'.'); response+="</tr>";
+	response +="<tr><td class=\"cell\">IP Gateway</td><td class=\"cell\">"; response+=printIP((IPAddress)WiFi.gatewayIP(),'.'); response+="</tr>";
+	response +="<tr><td class=\"cell\">NTP Server</td><td class=\"cell\">"; response+=NTP_TIMESERVER; response+="</tr>";
+	response +="<tr><td class=\"cell\">LoRa Router</td><td class=\"cell\">"; response+=_TTNSERVER; response+="</tr>";
+	response +="<tr><td class=\"cell\">LoRa Router IP</td><td class=\"cell\">"; response+=printIP((IPAddress)ttnServer,'.'); response+="</tr>";
+#ifdef _THINGSERVER
+	response +="<tr><td class=\"cell\">LoRa Router 2</td><td class=\"cell\">"; response+=_THINGSERVER; 
+		response += ":"; response += String(_THINGPORT); response+="</tr>";
+	response +="<tr><td class=\"cell\">LoRa Router 2 IP</td><td class=\"cell\">"; response+=printIP((IPAddress)thingServer,'.'); response+="</tr>";
+#endif
+	response +="</table>";
+
+	server.sendContent(response);
+}
+
+
+
+// ----------------------------------------------------------------------------
+// SENSORDATA
+// If enabled, display the sensorHistory on the current webserver Page.
+// Parameters:
+//	- <none>
+// Returns:
+//	- <none>
+// ----------------------------------------------------------------------------
+static void sensorData() 
+{
+#if STATISTICS >= 1
+	String response;
+	
+	response += "<h2>Message History</h2>";
+	response += "<table class=\"config_table\">";
+	response += "<tr>";
+	response += "<th class=\"thead\">Time</th>";
+	response += "<th class=\"thead\">Node</th>";
+	response += "<th class=\"thead\" colspan=\"2\">Channel</th>";
+	response += "<th class=\"thead\" style=\"width: 50px;\">SF</th>";
+	response += "<th class=\"thead\" style=\"width: 50px;\">RSSI</th>";
+	response += "<th class=\"thead\" style=\"width: 50px;\">pRSSI</th>";
+	response += "</tr>";
+	server.sendContent(response);
+
+	for (int i=0; i<MAX_STAT; i++) {
+		if (statr[i].sf == 0) break;
+		//String response="";
+		response = "";
+		
+		response += String() + "<tr><td class=\"cell\">" + stringTime(statr[i].tmst) + "</td>";
+		response += String() + "<td class=\"cell\">" + printHEX((char *)(& (statr[i].node)),' ') + "</td>";
+		response += String() + "<td class=\"cell\">" + statr[i].ch + "</td>";
+		response += String() + "<td class=\"cell\">" + freqs[statr[i].ch] + "</td>";
+		response += String() + "<td class=\"cell\">" + statr[i].sf + "</td>";
+		response += String() + "<td class=\"cell\">" + statr[i].rssi + "</td>";
+		response += String() + "<td class=\"cell\">" + statr[i].prssi + "</td></tr>";
+		
+		server.sendContent(response);
+	}
+	
+	server.sendContent("</table>");
+	
+#endif
+}
+
+// ----------------------------------------------------------------------------
+// SYSTEMDATA
+//
+// ----------------------------------------------------------------------------
+static void systemData()
+{
+	String response="";
+	response +="<h2>System Status</h2>";
+	
+	response +="<table class=\"config_table\">";
+	response +="<tr>";
+	response +="<th class=\"thead\">Parameter</th>";
+	response +="<th class=\"thead\">Value</th>";
+	response +="</tr>";
+	response +="<tr><td style=\"border: 1px solid black; width:120px;\">Gateway ID</td>";
+	response +="<td class=\"cell\">";	
+	  if (MAC_array[0]< 0x10) response +='0'; response +=String(MAC_array[0],HEX);	// The MAC array is always returned in lowercase
+	  if (MAC_array[1]< 0x10) response +='0'; response +=String(MAC_array[1],HEX);
+	  if (MAC_array[2]< 0x10) response +='0'; response +=String(MAC_array[2],HEX);
+	  response +="FFFF"; 
+	  if (MAC_array[3]< 0x10) response +='0'; response +=String(MAC_array[3],HEX);
+	  if (MAC_array[4]< 0x10) response +='0'; response +=String(MAC_array[4],HEX);
+	  if (MAC_array[5]< 0x10) response +='0'; response +=String(MAC_array[5],HEX);
+	response+="</tr>";
+	response +="<tr><td class=\"cell\">Free heap</td><td class=\"cell\">"; response+=ESP.getFreeHeap(); response+="</tr>";
+	response +="<tr><td class=\"cell\">ESP Chip ID</td><td class=\"cell\">"; response+=ESP.getChipId(); response+="</tr>";
+	
+	response +="</table>";
+	server.sendContent(response);
+}
+
+
+// ----------------------------------------------------------------------------
+// SEND WEB PAGE() 
+// Call the webserver and send the standard content and the content that is 
+// passed by the parameter.
 //
 // ----------------------------------------------------------------------------
 void sendWebPage(String webPage) {
-	server.send(200, "text/html", webPage);	
+
+	openWebPage();
+	
+	// Display and allow variable setting
+	server.sendContent(webPage);					// Dynamic and Main Part
+	
+	interruptData();								// Display interrupts only when debug >= 2
+	statisticsData();								// 
+	sensorData();									// Display the sensor history
+	systemData();									// System statistics such as heap etc.
+	wifiData();
+	
+	// Close the client connection to server
+	server.sendContent(String() + "<br><br />Click <a href=\"/HELP\">here</a> to explain Help and REST options<br>");
+	server.sendContent(String() + "</BODY></HTML>");
+	
+	server.client().stop();
+}
+
+// ----------------------------------------------------------------------------
+// Used by timeout functions
+// This function only displays the standard homepage
+//	Note: This function is not actively used, as the page is renewed 
+//	by using a HTML meta setting of 60 seconds
+// ----------------------------------------------------------------------------
+static void renewWebPage()
+{
+	//Serial.println(F("Renew Web Page"));
+	//sendWebPage(WifiServer("",""));
+	//return;
 }
 
 // ----------------------------------------------------------------------------
 // SetupWWW function called by main setup() program to setup webserver
-// It does actually not much more than installaing the callback handlers
+// It does actually not much more than installing the callback handlers
 // for messages sent to the webserver
 //
 // ----------------------------------------------------------------------------

@@ -1,7 +1,7 @@
 // 1-channel LoRa Gateway for ESP8266
 // Copyright (c) 2016, 2017 Maarten Westenberg version for ESP8266
-// Verison 4.0.2
-// Date: 2017-01-29
+// Version 4.0.3
+// Date: 2017-06-16
 //
 // 	based on work done by Thomas Telkamp for Raspberry PI 1ch gateway
 //	and many others.
@@ -25,7 +25,9 @@
 // and to one spreading factor only.
 // This parameters contains the default value of SF, the actual version can be set with
 // the webserver and it will be stored in SPIFF
-#define _SPREADING SF9							// Send and receive on this Spreading Factor (only)
+#define _SPREADING SF9
+
+// NOTE: The frequency is set in the loraModem.h file and is default 868.100000 MHz.
 
 // Single channel gateways if they behave strict should only use one frequency 
 // channel and one spreading factor. However, the TTN backend replies on RX2 
@@ -37,7 +39,7 @@
 // gateway
 // NOTE: If your node has only one frequency enabled and one SF, you must set this to 1
 //		in order to receive downlink messages
-#define _STRICT_1CH	0							// 1 is strict, 0 is as driven by backend
+#define _STRICT_1CH	0
 
 // Channel Activity Detection
 // This function will scan for valid LoRa headers and determine the Spreading 
@@ -49,8 +51,11 @@
 #define _CAD 1
 
 // Gather statistics on sensor and Wifi status
+// 0= No statistics
+// 1= Keep track of messages statistics, number determined by MAX_STAT
+// 2= See 1 + Keep track of messages received PER SF
 #define STATISTICS 2
-// Maximum number of statistics records gathered. 20 is a good maximum
+// Maximum number of statistics records gathered. 20 is a good maximum (memory intensive)
 #define MAX_STAT 20
 
 // Initial value of debug parameter. Can be hanged using the admin webserver
@@ -69,7 +74,8 @@
 // after all, a gateway can be a mote to the system as well
 // Set its LoRa address and key below
 // See spec. para 4.3.2
-#define GATEWAYNODE 0	
+#define GATEWAYNODE 0
+#define _CHECK_MIC 0
 
 // Define whether we want to manage the gateway over UDP (next to management 
 // thru webinterface).
@@ -92,30 +98,38 @@
 #define CONFIGFILE "/gwayConfig.txt"
 
 // Set the Server Settings (IMPORTANT)
-#define _LOCUDPPORT 1700						// Often 1700 or 1701 is used for upstream comms
+#define _LOCUDPPORT 1700					// UDP port of gateway! Often 1700 or 1701 is used for upstream comms
 
-#define _PULL_INTERVAL 30						// PULL_DATA messages to server to get downstream
-#define _STAT_INTERVAL 60						// Send a 'stat' message to server
-#define _NTP_INTERVAL 3600						// How often doe we want time NTP synchronization
+// Timing
+#define _PULL_INTERVAL 30					// PULL_DATA messages to server to get downstream
+#define _STAT_INTERVAL 120					// Send a 'stat' message to server
+#define _NTP_INTERVAL 3600					// How often doe we want time NTP synchronization
+#define _WWW_INTERVAL	60					// Number of seconds before we renew the WWW page
 
-// MQTT definitions
-#define _TTNPORT 1700							// Standard port for TTN
-//#define _TTNSERVER "router.eu.staging.thethings.network"
+// MQTT definitions, these settings should be standard for TTN
+// and need not changing
+#define _TTNPORT 1700						// Standard port for TTN
 #define _TTNSERVER "router.eu.thethings.network"
 
+// If yoyur have a second back-end server defined such as semtech or loriot.io
+// your can define _THINGSPORT and _THINGSERVER
+// If not, make sure that you do not defined these.
 // Port is UDP port in this program
-#define _THINGPORT <YourPortNumber>						// dash.things4u.eu
-#define _THINGSERVER "<Your.Server.com>"			// Server URL of the LoRa-udp.js handler
+//#define _THINGPORT 5001					// pir.things4u.eu; 
+//#define _THINGPORT 1701					// udp @ westenberg.org
+//#define _THINGPORT 1701					// iss.things4u.eu
+//#define _THINGPORT 56284					// adoorn.things4u.eu
+//#define _THINGPORT 56084					// udp.things4u.eu
+#define _THINGPORT 57084					// dash.westenberg.org:8057
+#define _THINGSERVER "westenberg.org"		// Server URL of the LoRa-udp.js handler
 
 // Gateway Ident definitions
 #define _DESCRIPTION "ESP Gateway"
-#define _EMAIL "<Your-Email>"
+#define _EMAIL "mw12554@hotmail.com"
 #define _PLATFORM "ESP8266"
-#define _LAT 52.0000
-#define _LON 5.90000
-#define _ALT 1
-
-
+#define _LAT 52.237367
+#define _LON 5.978654
+#define _ALT 14
 								
 // Definitions for the admin webserver
 #define A_SERVER 1				// Define local WebServer only if this define is set
@@ -135,6 +149,14 @@
 #define ASSERT(cond) /**/
 #endif
 
+#if GATEWAYNODE==1
+#define _DEVADDR { 0x26, 0x01, 0x15, 0x3D }
+#define _APPSKEY { 0x02, 0x02, 0x04, 0x20, 0x00, 0x00, 0x00, 0x00, 0x54, 0x68, 0x69, 0x6E, 0x67, 0x73, 0x34, 0x55 }
+#define _NWKSKEY { 0x54, 0x68, 0x69, 0x6E, 0x67, 0x73, 0x34, 0x55, 0x54, 0x68, 0x69, 0x6E, 0x67, 0x73, 0x34, 0x55 }
+#define _SENSOR_INTERVAL 300
+#endif
+
+
 // Wifi definitions
 // WPA is an array with SSID and password records. Set WPA size to number of entries in array
 // When using the WiFiManager, we will overwrite the first entry with the 
@@ -148,8 +170,13 @@ struct wpas {
 
 wpas wpa[] = {
 	{ "" , "" },
-	{ "your-ssid","your-password" },
-	{ "", "" }									// spare
+	{ "Livebox-0e0d", "E2D92F37634C512F712E3DCC1E"},
+//	{ "GLGK_Public","draadloosinternet" },
+	{ "OnePlus2", "maanlama@16" },
+	{ "platenspeler", "maanlama@16" },
+//	{ "bushhouse", "bush1967" },
+//	{ "Maarten-in", "apeldoorn47" },
+	{ "", ""}									// spare line
 };
 
 // Definition of the configuration record that is read at startup and written
@@ -158,9 +185,11 @@ struct espGwayConfig {
 	String ssid;				// type String is more flexible and allows assignments
 	String pass;
 	uint8_t ch;					// index to freqs array, freqs[ifreq]=868100000 default
-	uint16_t fcnt;				// =0 as init value
+	uint16_t fcnt;				// =0 as init value	XXX Could be 32 bit in size
 	uint8_t sf;					// range from SF7 to SF12
 	uint8_t debug;				// range 0 to 4
 	bool cad;
 	bool hop;
 } gwayConfig;
+
+

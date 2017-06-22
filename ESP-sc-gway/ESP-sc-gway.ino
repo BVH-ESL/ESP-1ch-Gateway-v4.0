@@ -1,7 +1,7 @@
 // 1-channel LoRa Gateway for ESP8266
 // Copyright (c) 2016, 2017 Maarten Westenberg version for ESP8266
-// Version 4.0.2
-// Date: 2017-01-29
+// Version 4.0.3
+// Date: 2017-06-16
 // Author: Maarten Westenberg (mw12554@hotmail.com)
 //
 // 	based on work done by Thomas Telkamp for Raspberry PI 1-ch gateway
@@ -26,7 +26,7 @@
 // ----------------------------------------------------------------------------------------
 
 //
-#define VERSION " ! V. 4.0.2, 170129"
+#define VERSION " ! V. 4.0.3, 170616"
 
 #include "ESP-sc-gway.h"						// This file contains configuration of GWay
 
@@ -121,6 +121,9 @@ WiFiUDP Udp;
 uint32_t stattime = 0;							// last time we sent a stat message to server
 uint32_t pulltime = 0;							// last time we sent a pull_data request to server
 uint32_t lastTmst = 0;
+#if A_SERVER==1
+uint32_t wwwtime = 0;
+#endif
 
 SimpleTimer timer; 								// Timer is needed for delayed sending
 
@@ -315,7 +318,7 @@ IPAddress getDnsIP() {
 }
 
 // ----------------------------------------------------------------------------
-// config.txt is a text file that contains line(!) with WPA configuration items
+// config.txt is a text file that contains lines(!) with WPA configuration items
 // Each line contains an SSID and a Password for an access point
 //
 // ----------------------------------------------------------------------------
@@ -329,7 +332,7 @@ int WlanReadWpa() {
 	_cad = gwayConfig.cad;
 	_hop = gwayConfig.hop;
 #if GATEWAYNODE == 1
-	if (gwayConfig.fcnt != (uint8_t) 0) frameCount = gwayConfig.fcnt;
+	if (gwayConfig.fcnt != (uint8_t) 0) frameCount = gwayConfig.fcnt+10;
 #endif
 	
 #if WIFIMANAGER > 0
@@ -369,6 +372,14 @@ int WlanWriteWpa( char* ssid, char *pass) {
 	
 	String p((char *) pass);
 	gwayConfig.pass = p;
+
+#if GATEWAYNODE == 1	
+	gwayConfig.fcnt = frameCount;
+#endif
+	gwayConfig.ch = ifreq;
+	gwayConfig.sf = sf;
+	gwayConfig.cad = _cad;
+	gwayConfig.hop = _hop;
 	
 	writeConfig( CONFIGFILE, &gwayConfig);
 }
@@ -381,7 +392,7 @@ int WlanWriteWpa( char* ssid, char *pass) {
 int WlanConnect() {
 
   // We start by connecting to a WiFi network
-  wifi_station_set_hostname( "espgway" );
+  wifi_station_set_hostname( (char *) "espgway" );
 #if WIFIMANAGER==1
   WiFiManager wifiManager;
 #endif
@@ -806,7 +817,7 @@ void setup () {
 	Serial.flush();
 	delay(500);
 		
-	wifi_station_set_hostname( "espgway" );
+	wifi_station_set_hostname( (char *) "espgway" );
 
 	if (SPIFFS.begin()) Serial.println(F("SPIFFS loaded success"));
 
@@ -915,8 +926,7 @@ void setup () {
 	setupWWW();
 #endif
 
-	Serial.println(F("--------------------------------------"));
-	delay(100);											// Wait after setup
+	delay(100);												// Wait after setup
 	
 	_state = S_INIT;
 	initLoraModem();
@@ -938,7 +948,9 @@ void setup () {
 		attachInterrupt(pins.dio0, Interrupt_0, RISING);	// Separate interrupts
 		attachInterrupt(pins.dio1, Interrupt_1, RISING);	// Separate interrupts		
 	}
+	Serial.println(F("--------------------------------------"));
 }
+
 
 
 // ----------------------------------------------------------------------------
@@ -960,7 +972,9 @@ void loop ()
 	uint32_t nowseconds;
 	int packetSize;
 	
-	// Receive Lora messages waiting, if there are any. Most important function in loop()
+	// Receive Lora messages waiting, if there are any. 
+	// Most important function in loop()
+	//
 	if (_state == S_RXDONE) {
 		eventHandler();							// Is S_RXDONE read a message
 		yield();
@@ -969,6 +983,7 @@ void loop ()
 	// The next section is emergency only. If posible we hop() in the state machine.
 	// If hopping is enabled, and by lack of timer, we hop()
 	// XXX Experimental, 2.5 ms between hops max
+	//
 	nowTime = micros();
 	if ((_hop) && (((long)(nowTime - hopTime)) > 2500)) {
 		if ((_state == S_SCAN) && (sf==SF12)) {
@@ -1002,7 +1017,7 @@ void loop ()
 	// messages on UDP for every message sent by the gateway. So we have to consume them..
 	// As we do not know when the server will respond, we test in every loop.
 	//
-
+	//
 	while( (packetSize = Udp.parsePacket()) > 0) {		// Length of UDP message waiting
 		yield();
 		// Packet may be PKT_PUSH_ACK (0x01), PKT_PULL_ACK (0x03) or PKT_PULL_RESP (0x04)
@@ -1020,10 +1035,12 @@ void loop ()
     if (nowseconds - stattime >= _STAT_INTERVAL) {		// Wake up every xx seconds
         sendstat();										// Show the status message and send to server
 		
+#if GATEWAYNODE==1
 		// If the 1ch gateway is a sensor itself, send the sensor values
 		// could be battery but also other status info or sensor info
-#if GATEWAYNODE==1
 		yield();
+		
+		int buff_index;
 		if ((buff_index = sensorPacket(buff_up)) >= 0) {
 			yield();
 			sendUdp(buff_up, buff_index);
@@ -1042,11 +1059,17 @@ void loop ()
 		pulltime = nowseconds;
     }
 	
-	yield();
 	
-	// Handle the WiFi server part of this sketch. Mainly used for administration of the node
 #if A_SERVER==1
+	// Handle the WiFi server part of this sketch. Mainly used for administration of the node
+	yield();
 	server.handleClient();
+	
+	//nowseconds = (uint32_t) millis() /1000;
+    //if (nowseconds - wwwtime >= _WWW_INTERVAL) {		// Wake up every xx seconds
+    //    renewWebPage();										// Send PULL_DATA message to server						
+	//	wwwtime = nowseconds;
+    //}
 #endif	
 	
 }
