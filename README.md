@@ -1,6 +1,6 @@
 # Single Channel LoRaWAN Gateway
 
-Version 4.0.2, January 29, 2017
+Version 4.0.3, June 22, 2017
 Author: M. Westenberg (mw12554@hotmail.com)
 Copyright: M. Westenberg (mw12554@hotmail.com)
 
@@ -116,7 +116,7 @@ Not (yet) supported:
 
 ## Dependencies
 
-The software is dependent on several pieces of software, the Ardiuino IDE for ESP8266 
+The software is dependent on several pieces of software, the Arduino IDE for ESP8266 
 being the most important. Several other libraries are also used by this program, make sure you install those libraries with the IDE:
 
 - gBase64 library, The gBase library is actually a base64 library made 
@@ -126,6 +126,7 @@ being the most important. Several other libraries are also used by this program,
 - Arduino JSON; Needed to decode downstream messages
 - SimpleTimer; ot yet used, but reserved for interrupt and timing
 - WiFiManager
+- ESP8266 Web Server
 - Streaming library, used in the wwwServer part
 - AES library (taken from ideetron.nl) for downstream messages
 - Time
@@ -183,7 +184,7 @@ Make sure that you set:
 
 ### Lora Radio Defaults:  
 
-- LoRa:   SF7 at 868.1 Mhz
+- LoRa:   SF9 at 868.1 Mhz
 - Server:  
   \#define _TTNSERVER "router.eu.thethings.network"  
   \#define _TTNPORT 1700  
