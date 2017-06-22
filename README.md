@@ -1,6 +1,6 @@
 # Single Channel LoRaWAN Gateway
 
-Version 4.0.3, June 19, 2017
+Version 4.0.2, January 29, 2017
 Author: M. Westenberg (mw12554@hotmail.com)
 Copyright: M. Westenberg (mw12554@hotmail.com)
 
@@ -43,12 +43,7 @@ Version 3.0 includes WiFi Master support which makes it easy to use the 1-ch gat
 Version 4.0 includes CAD and Frequency Hopping spport and better web insterface allowing more parameters to be set over the web
 
 
-# Features
-
-New Features version 4.0.3 (June 16, 2017)
-
-- Small cosmeti changes and bug fixes
-- Address of node in webserver is now MSB first
+## Features
 
 New features in version 4.0.0 (January 26, 2017)):
 
