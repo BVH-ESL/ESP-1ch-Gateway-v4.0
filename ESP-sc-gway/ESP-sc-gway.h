@@ -19,6 +19,19 @@
 //
 // ----------------------------------------------------------------------------------------
 
+
+// Initial value of debug parameter. Can be hanged using the admin webserver
+// For operational use, set initial DEBUG vaulue 0
+#define DEBUG 1
+
+
+// Definitions for the admin webserver
+#define A_SERVER 1				// Define local WebServer only if this define is set
+#define A_REFRESH 0
+#define A_SERVERPORT 80			// local webserver port
+#define A_MAXBUFSIZE 192		// Must be larger than 128, but small enough to work
+
+
 // The spreading factor is the most important parameter to set for a single channel
 // gateway. It specifies the speed/datarate in which the gateway and node communicate.
 // As the name says, in principle the single channel gateway listens to one channel/frequency
@@ -57,10 +70,7 @@
 #define STATISTICS 2
 // Maximum number of statistics records gathered. 20 is a good maximum (memory intensive)
 #define MAX_STAT 20
-
-// Initial value of debug parameter. Can be hanged using the admin webserver
-// For operational use, set initial DEBUG vaulue 0
-#define DEBUG 1					
+			
 
 // Allows configuration through WifiManager AP setup. Must be 0 or 1					
 #define WIFIMANAGER 0
@@ -104,7 +114,7 @@
 #define _PULL_INTERVAL 30					// PULL_DATA messages to server to get downstream
 #define _STAT_INTERVAL 120					// Send a 'stat' message to server
 #define _NTP_INTERVAL 3600					// How often doe we want time NTP synchronization
-#define _WWW_INTERVAL	60					// Number of seconds before we renew the WWW page
+#define _WWW_INTERVAL	60					// Number of seconds before we refresh the WWW page
 
 // MQTT definitions, these settings should be standard for TTN
 // and need not changing
@@ -126,12 +136,6 @@
 #define _LAT 52.00
 #define _LON 5.800
 #define _ALT 14
-								
-// Definitions for the admin webserver
-#define A_SERVER 1				// Define local WebServer only if this define is set
-#define A_REFRESH 0
-#define A_SERVERPORT 80			// local webserver port
-#define A_MAXBUFSIZE 192		// Must be larger than 128, but small enough to work
 
 #define _BAUDRATE 115200		// Works for debug messages to serial momitor
 

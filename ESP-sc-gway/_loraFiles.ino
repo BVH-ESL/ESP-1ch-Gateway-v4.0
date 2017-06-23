@@ -61,8 +61,8 @@ int readConfig(const char *fn, struct espGwayConfig *c) {
 			Serial.print(F("PASS=")); Serial.println(val); 
 			(*c).pass = val;
 		}
-		if (id == "FREQ") { 								// Frequency
-			Serial.print(F("FREQ=")); Serial.println(val); 
+		if (id == "CH") { 									// Frequency Channel
+			Serial.print(F("CH=")); Serial.println(val); 
 			(*c).ch = (uint32_t) val.toInt();
 		}
 		if (id == "SF") { 									// Spreading Factor
@@ -132,7 +132,7 @@ int writeConfig(const char *fn, struct espGwayConfig *c) {
 
 	f.print("SSID"); f.print('='); f.print((*c).ssid); f.print('\n'); 
 	f.print("PASS"); f.print('='); f.print((*c).pass); f.print('\n');
-	f.print("FREQ"); f.print('='); f.print((*c).ch); f.print('\n');
+	f.print("CH"); f.print('='); f.print((*c).ch); f.print('\n');
 	f.print("SF");   f.print('='); f.print((*c).sf);   f.print('\n');
 	f.print("FCNT"); f.print('='); f.print((*c).fcnt); f.print('\n');
 	f.print("DEBUG"); f.print('='); f.print((*c).debug); f.print('\n');

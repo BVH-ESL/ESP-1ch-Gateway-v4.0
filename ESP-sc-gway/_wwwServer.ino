@@ -43,7 +43,7 @@
 // Output the 4-byte IP address for easy printing
 // ----------------------------------------------------------------------------
 String printIP(IPAddress ipa, const char sep) {
-	String response;
+	String response="";
 	response+=(IPAddress)ipa[0]; response+=sep;
 	response+=(IPAddress)ipa[1]; response+=sep;
 	response+=(IPAddress)ipa[2]; response+=sep;
@@ -53,7 +53,7 @@ String printIP(IPAddress ipa, const char sep) {
 
 // Print a HEXadecimal string
 String printHEX(char * hexa, const char sep) {
-	String response;
+	String response="";
 	char m;
 	m = hexa[0]; if (m<016) response+='0'; response += String(m, HEX);  response+=sep;
 	m = hexa[1]; if (m<016) response+='0'; response += String(m, HEX);  response+=sep;
@@ -69,10 +69,10 @@ String printHEX(char * hexa, const char sep) {
 // So a value of 100 wold mean that the event took place 1 minute and 40 seconds ago
 // ----------------------------------------------------------------------------
 String stringTime(unsigned long t) {
-	String res;
+	String response="";
 	String Days[7]={"Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"};
 
-	if (t==0) { res = "--"; return(res); }
+	if (t==0) { response = "--"; return(response); }
 	
 	// now() gives seconds since 1970
 	time_t eventTime = now() - ((millis()-t)/1000);
@@ -80,17 +80,17 @@ String stringTime(unsigned long t) {
 	byte _minute = minute(eventTime);
 	byte _second = second(eventTime);
 	
-	res += Days[weekday(eventTime)-1]; res += " ";
-	res += day(eventTime); res += "-";
-	res += month(eventTime); res += "-";
-	res += year(eventTime); res += " ";
-	if (_hour < 10) res += "0";
-	res += _hour; res +=":";
-	if (_minute < 10) res += "0";
-	res += _minute; res +=":";
-	if (_second < 10) res+= "0";
-	res += _second;
-	return (res);
+	response += Days[weekday(eventTime)-1]; response += " ";
+	response += day(eventTime); response += "-";
+	response += month(eventTime); response += "-";
+	response += year(eventTime); response += " ";
+	if (_hour < 10) response += "0";
+	response += _hour; response +=":";
+	if (_minute < 10) response += "0";
+	response += _minute; response +=":";
+	if (_second < 10) response+= "0";
+	response += _second;
+	return (response);
 }
 
 // ----------------------------------------------------------------------------
@@ -100,6 +100,9 @@ String stringTime(unsigned long t) {
 // ----------------------------------------------------------------------------
 static void openWebPage()
 {
+#if A_REFRESH==1
+	server.client().stop();							// XXX experimental, stop webserver in case something is still running!
+#endif
 	String response="";
 	server.setContentLength(CONTENT_LENGTH_UNKNOWN);
 	server.send(200, "text/html", "");
@@ -280,18 +283,18 @@ String WifiServer(const char *cmd, const char *arg) {
 		response += "AUTO</td>";
 	}
 	else {
-		response+=ifreq; 
-		response+="</td>";
+		response +=ifreq; 
+		response +="</td>";
 		response +="<td class=\"cell\"><a href=\"FREQ=-1\"><button>-</button></a></td>";
 		response +="<td class=\"cell\"><a href=\"FREQ=1\"><button>+</button></a></td>";
 	}
 	response +="</tr>";
 	
 	response +="<tr><td class=\"cell\">Timing Correction (uSec)</td><td class=\"cell\">"; response += txDelay; 
-	response+="</td>";
+	response +="</td>";
 	response +="<td class=\"cell\"><a href=\"DELAY=-1\"><button>-</button></a></td>";
 	response +="<td class=\"cell\"><a href=\"DELAY=1\"><button>+</button></a></td>";
-	response+="</tr>";	
+	response +="</tr>";	
 #endif
 
 	// Debugging options	
@@ -455,7 +458,7 @@ static void wifiData()
 static void sensorData() 
 {
 #if STATISTICS >= 1
-	String response;
+	String response="";
 	yield();
 	
 	response += "<h2>Message History</h2>";
