@@ -107,7 +107,11 @@ static void openWebPage()
 	// init webserver, fill the webpage
 	// NOTE: The page is renewed every _WWW_INTERVAL seconds, please adjust in ESP-sc-gway.h1
 	//
+#if A_REFRESH==1
 	response += String() + "<!DOCTYPE HTML><HTML><HEAD><meta http-equiv='refresh' content='"+_WWW_INTERVAL+"'><TITLE>ESP8266 1ch Gateway</TITLE>";
+#else
+	response += String() + "<!DOCTYPE HTML><HTML><HEAD><TITLE>ESP8266 1ch Gateway</TITLE>";
+#endif
 	response += "<style>.thead {background-color:green; color:white;} ";
 	response += ".cell {border: 1px solid black;}";
 	response += ".config_table {max_width:100%; min-width:400px; width:90%; border:1px solid black; border-collapse:collapse;}";
@@ -219,7 +223,7 @@ String WifiServer(const char *cmd, const char *arg) {
 	}
 #endif
 
-	delay(5);
+	delay(3);
 	
 
 		
@@ -334,6 +338,7 @@ static void interruptData()
 {
 	if (debug >= 2) {
 		String response="";
+		yield();
 		
 		response +="<h2>System State and Interrupt</h2>";
 		
@@ -451,6 +456,7 @@ static void sensorData()
 {
 #if STATISTICS >= 1
 	String response;
+	yield();
 	
 	response += "<h2>Message History</h2>";
 	response += "<table class=\"config_table\">";
@@ -620,7 +626,7 @@ void setupWWW()
 		sendWebPage(WifiServer("HOP","0"));					// Send the webPage string
 	});
 	Serial.print(F("Admin Server started on port "));
-	Serial.println(SERVERPORT);
+	Serial.println(A_SERVERPORT);
 	return;
 }
 

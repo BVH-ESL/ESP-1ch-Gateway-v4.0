@@ -65,23 +65,23 @@ unsigned long hopTime=0;
 
 // Definition of the GPIO pins used by the Gateway
 struct pins {
-	uint8_t dio0=15;	// GPIO15 / D8. For the Hallard board shared betweenDio0/DIO1/DIO2
-	uint8_t dio1=15;	// Used for CAD, may or not be shared with DIO0
-	uint8_t dio2=15;	// Used for frequency hopping, don't care
-	uint8_t ss=16;		// Select pin connected to SPIO16
-	uint8_t rst=0;		// Reset pin not used	
-// MISO 12
-// MOSI 13
-// CLK 14
-// SS 16
+	uint8_t dio0=15;	// GPIO15 / D8. For the Hallard board shared between DIO0/DIO1/DIO2
+	uint8_t dio1=15;	// GPIO15 / D8. Used for CAD, may or not be shared with DIO0
+	uint8_t dio2=15;	// GPIO15 / D8. Used for frequency hopping, don't care
+	uint8_t ss=16;		// GPIO16 / D0. Select pin connected to SPIO16 / D0
+	uint8_t rst=0;		// GPIO0 / D3. Reset pin not used	
+// MISO 12 / D6
+// MOSI 13 / D7
+// CLK 14 / D5
+// SS 16 / D0
 } pins;
 
 // For ComResult gateway use the following settings
 //struct pins {
-//	uint8_t dio0=5;		// GPIO15 / D8. For the Hallard board shared betweenDio0/DIO1/DIO2
-//	uint8_t dio1=4;		// Used for CAD, may or not be shared with DIO0
-//	uint8_t dio2=0;		// Used for frequency hopping, don't care
-//	uint8_t ss=15;		// Select pin connected to SPIO16
+//	uint8_t dio0=5;		// GPIO5 / D1. For the Hallard board shared betweenDio0/DIO1/DIO2
+//	uint8_t dio1=4;		// GPIO4 / D2. Used for CAD, may or not be shared with DIO0
+//	uint8_t dio2=0;		// GPIO0 / D3. Used for frequency hopping, don't care
+//	uint8_t ss=15;		// GPIO15 / D8. Select pin connected to SPIO16
 //	uint8_t rst=0;		// Reset pin not used	
 //} pins;
 

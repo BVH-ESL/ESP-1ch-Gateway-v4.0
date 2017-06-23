@@ -129,9 +129,10 @@
 								
 // Definitions for the admin webserver
 #define A_SERVER 1				// Define local WebServer only if this define is set
-#define SERVERPORT 80			// local webserver port
-
+#define A_REFRESH 0
+#define A_SERVERPORT 80			// local webserver port
 #define A_MAXBUFSIZE 192		// Must be larger than 128, but small enough to work
+
 #define _BAUDRATE 115200		// Works for debug messages to serial momitor
 
 // ntp

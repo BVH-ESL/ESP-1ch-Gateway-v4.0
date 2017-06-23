@@ -36,7 +36,7 @@ Version 1 was originally based on code base of Single Channel gateway for Raspbe
 which was developed by Thomas Telkamp. Code was ported and extended to run on ESP8266 mcu and provide RTC, Webserver and DNS services.
 Version 2.0 adds several enhancements and part have been completely redesigned.
 Changes include two-way traffic. The code is also slit over multiple source files which makes editing easier.
-Version 3.0 includes WiFi Master support which makes it easy to use the 1-ch gateway for demo purposes where you need to quickly connect the gateway to a WiFi accesspoint (or your mobiel phone).It also contains limited SPIFF filesystem support which enables the ESP to store its data in a more persistent way.
+Version 3.0 includes WiFi Master support which makes it easy to use the 1-ch gateway for demo purposes where you need to quickly connect the gateway to a WiFi accesspoint (or your mobile phone).It also contains limited SPIFF filesystem support which enables the ESP to store its data in a more persistent way.
 Version 4.0 includes CAD and Frequency Hopping support and better web insterface allowing more parameters to be set over the web
 
 

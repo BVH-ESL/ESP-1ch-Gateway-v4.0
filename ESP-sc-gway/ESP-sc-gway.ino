@@ -73,7 +73,7 @@ int debug=1;									// Debug level! 0 is no msgs, 1 normal, 2 extensive
 #if A_SERVER==1
 #include <Streaming.h>          				// http://arduiniana.org/libraries/streaming/
 //  String webPage;
-  ESP8266WebServer server(SERVERPORT);
+  ESP8266WebServer server(A_SERVERPORT);
 #endif
 using namespace std;
 

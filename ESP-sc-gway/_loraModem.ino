@@ -703,7 +703,6 @@ int buildPacket(uint32_t tmst, uint8_t *buff_up, uint8_t *message, char messageL
 	char cfreq[12] = {0};								// Character array to hold freq in MHz
 	lastTmst = tmst;									// Following/according to spec
 	int buff_index=0;
-	
 		
 #if _CHECK_MIC==1
 	unsigned char NwkSKey[16] = _NWKSKEY ;
@@ -983,10 +982,9 @@ int receivePacket(uint8_t * buff_up)
 				Serial.print(F("receivePacket:: ")); 
 				printState(2);
 			}
-			return(buff_index);
-			
-        } // received a message
-	return(-1);								// failure no message read
+			return(buff_index); 							// received a message
+        }
+	return(-1);												// failure no message read
 }
 
 
