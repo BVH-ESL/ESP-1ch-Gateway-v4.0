@@ -21,46 +21,27 @@ Maintained by Maarten Westenberg (mw12554@hotmail.com)
 This repository contains a proof-of-concept implementation of a single channel LoRaWAN gateway.
 The software implements a standard LoRa gateway with the following exceptions on changes:
 
--  This LoRa gateway is not a full gateway but implements just a one-channel/one frequency gateway. 
+-  This LoRa gateway is not a full gateway but it implements just a one-channel/one frequency gateway. 
 The minimum amount of frequencies supported by a full gateway is 3, most suport 9 or more frequencies.
 This software started as a proof-of-concept to prove that a single low-cost RRFM95 chip which was present in almost every
 LoRa node in Europe could be used as a cheap alternative to the far more expensive full gateways that were 
 making use of the SX1301 chip.
 
-- As the software of this gateway will be used during the development phase of a project solution or in demo situations, 
+- As the software of this gateway will be used during the development phase of a project or in demo situations, 
 the software is flexible and can be easily configured according to environment or customer requirements. 
-There are two ways of interacting with the software: 1. Modifying the ESP-sc-gway.h fail at compile time allows the 
+There are two ways of interacting with the software: 1. Modifying the ESP-sc-gway.h file at compile time allows the 
 administrator to set almost all parameters. 2. Using the webinterface (http://<gateway_IP>) will allow administrators to set and reset several of the 
-parameters at runtime also.
+parameters at runtime.
+
 
 ### testing
 
-The single channel gateway has been tested on a gateway with the Wemos D1 Mini, using a 
-HopeRF RFM95W transceiver.  The LoRa nodes tested are:
+The single channel gateway has been tested on a gateway with the Wemos D1 Mini, using a HopeRF RFM95W transceiver.  
+The LoRa nodes tested are:
 
 - TeensyLC with HopeRF RFM95 radio
 - Arduino Pro-Mini (default Armega328 model, 8MHz 3.3V and 16MHz 3.3V)
-- ESP8266 base nodes.
-
-
-
-
-## Note
-
-There seems to be a lot of variation in Arduino Pro-Mini devices. I have at least 4 different types. 
-Most work, and some do not work with the 1ch Gateway mostly due to timing issues so it seems.
-The standard 8MHz type with the large chrystal on board seems to be working best.
-
-The code is for testing and development purposes only, and is not meant for production usage. 
-
-Version 1 was originally based on code base of Single Channel gateway for RaspberryPI
-which was developed by Thomas Telkamp. Code was ported and extended to run on ESP8266 mcu and provide RTC, Webserver and DNS services.
-Version 2.0 adds several enhancements and part have been completely redesigned.
-Changes include two-way traffic. The code is also slit over multiple source files which makes editing easier.
-Version 3.0 includes WiFi Master support which makes it easy to use the 1-ch gateway for demo purposes where you need to quickly connect the gateway to a WiFi accesspoint (or your mobile phone).It also contains limited SPIFF filesystem support which enables the ESP to store its data in a more persistent way.
-Version 4.0 includes CAD and Frequency Hopping support and better web insterface allowing more parameters to be set over the web
-
-
+- ESP8266 basednodes.
 
 
 ## Dependencies
@@ -163,20 +144,13 @@ The following parameters can be set using the webServer.
 
 
 # To DO
+
 The following things are still on my wish list to make to the single channel gateway:
 - Receive downstream message with commands form the server. These can be used to configure
   the gateway through downlink messages (such as setting the SF)
-- Repair the _loraSensor functions for use with TTN
+
 
 # Release Notes
-
-The Gateay timestamps are according to the LoRa specification: 
-- Receive_Delay1 1s
-- Receive Delay2	2s (starting after Receive_Delay1)
-- Join_Accept_Delay1 5s
-- Join_Accept_Delay2 6s
-
-## Releases
 
 New features in version 4.0.4 (June 24, 2017):
 
@@ -260,6 +234,21 @@ Not (yet) supported:
 - FSK modulation
 - RX2 timeframe messages at frequency 869,525 MHz are not (yet) supported.
 - SF9-SF12 downlink messaging available but needs more testing
+
+## Note
+
+There seems to be a lot of variation in Arduino Pro-Mini devices. I have at least 4 different types. 
+Most work, and some do not work with the 1ch Gateway mostly due to timing issues so it seems.
+The standard 8MHz type with the large chrystal on board seems to be working best.
+
+The code is for testing and development purposes only, and is not meant for production usage. 
+
+Version 1 was originally based on code base of Single Channel gateway for RaspberryPI
+which was developed by Thomas Telkamp. Code was ported and extended to run on ESP8266 mcu and provide RTC, Webserver and DNS services.
+Version 2.0 adds several enhancements and part have been completely redesigned.
+Changes include two-way traffic. The code is also slit over multiple source files which makes editing easier.
+Version 3.0 includes WiFi Master support which makes it easy to use the 1-ch gateway for demo purposes where you need to quickly connect the gateway to a WiFi accesspoint (or your mobile phone).It also contains limited SPIFF filesystem support which enables the ESP to store its data in a more persistent way.
+Version 4.0 includes CAD and Frequency Hopping support and better web insterface allowing more parameters to be set over the web
 
 
 # License
