@@ -1,7 +1,7 @@
 // 1-channel LoRa Gateway for ESP8266
 // Copyright (c) 2016, 2017 Maarten Westenberg version for ESP8266
-// Version 4.0.3
-// Date: 2017-06-16
+// Version 4.0.4
+// Date: 2017-06-23
 // Author: Maarten Westenberg (mw12554@hotmail.com)
 //
 // 	based on work done by Thomas Telkamp for Raspberry PI 1-ch gateway
@@ -26,7 +26,7 @@
 // ----------------------------------------------------------------------------------------
 
 //
-#define VERSION " ! V. 4.0.3, 170616"
+#define VERSION " ! V. 4.0.4, 170624"
 
 #include "ESP-sc-gway.h"						// This file contains configuration of GWay
 
@@ -632,7 +632,7 @@ void sendUdp(uint8_t * msg, int length) {
 		Serial.println("sendUdp:: Error write");
 	}
 	else {
-		if (debug>=2) {
+		if (debug>=3) {
 			Serial.print(F("sendUdp 1: sent "));
 			Serial.print(l);
 			Serial.println(F(" bytes"));
@@ -649,7 +649,7 @@ void sendUdp(uint8_t * msg, int length) {
 		Serial.println("sendUdp:: Error write");
 	}
 	else {
-		if (debug>=2) {
+		if (debug>=3) {
 			Serial.print(F("sendUdp 2: sent "));
 			Serial.print(l);
 			Serial.println(F(" bytes"));

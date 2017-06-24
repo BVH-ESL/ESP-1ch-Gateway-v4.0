@@ -1,7 +1,9 @@
 # Single Channel LoRaWAN Gateway
 
 Version 4.0.3, June 22, 2017
+
 Author: M. Westenberg (mw12554@hotmail.com)
+
 Copyright: M. Westenberg (mw12554@hotmail.com)
 
 All rights reserved. This program and the accompanying materials
@@ -10,18 +12,38 @@ which accompanies this distribution, and is available at
 https://opensource.org/licenses/mit-license.php
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Maintained by Maarten Westenberg (mw12554@hotmail.com)
 
 # Description
 
-This repository contains a proof-of-concept implementation of a single
-channel LoRaWAN gateway. It has been tested on the Wemos D1 Mini, using a 
-HopeRF RFM95W transceiver.  The nodes tested are:
+This repository contains a proof-of-concept implementation of a single channel LoRaWAN gateway.
+The software implements a standard LoRa gateway with the following exceptions on changes:
+
+-  The LoRa gateway is not a full gateway but implements just a one-channel/one frequency gateway. 
+The minimum amount of frequencies supported by a full gateway is 3, most suport 9 or more frequencies.
+This software started as a proof-of-concept to prove that a single low-cost RRFM95 chip which was present in almost every
+LoRa node Europe could be used as a cheap alternative to the far more expensive full gateways that were 
+making use of the 1301 chip.
+
+- As the software of this gateway will be used during the development phase of a project solution or in demo situations, 
+the software is flexible and can be easily configured according to environment or customer requirements. 
+There are two ways of interacting with the software: 1. Modifying the ESP-sc-gway.h fail at compile time allows the 
+administrator to set almost all parameters.
+2. Using the webinterface (http://<gateway_IP>) will allow aministrators to set and reset several of the 
+parameters at runtime also.
+
+### testing
+
+teh single channel gateway has been tested on a gateway with the Wemos D1 Mini, using a 
+HopeRF RFM95W transceiver.  The LoRa nodes tested are:
 
 - TeensyLC with HopeRF RFM95 radio
 - Arduino Pro-Mini (default Armega328 model, 8MHz 3.3V and 16MHz 3.3V)
+- ESP8266 base nodes.
 
-Maintained by Maarten Westenberg (mw12554@hotmail.com)
+
 
 
 ## Note
@@ -40,9 +62,129 @@ Version 3.0 includes WiFi Master support which makes it easy to use the 1-ch gat
 Version 4.0 includes CAD and Frequency Hopping support and better web insterface allowing more parameters to be set over the web
 
 
-## Features
 
-New features in version 4.0.3 (June 22, 2017)):
+
+## Dependencies
+
+The software is dependent on several pieces of software, the Arduino IDE for ESP8266 
+being the most important. Several other libraries are also used by this program, make sure you install those libraries with the IDE:
+
+- gBase64 library, The gBase library is actually a base64 library made 
+	by Adam Rudd (url=https://github.com/adamvr/arduino-base64). I changed the name because I had
+	another base64 library installed on my system and they did not coexist well.
+- Time library (http://playground.arduino.cc/code/time)
+- Arduino JSON; Needed to decode downstream messages
+- SimpleTimer; ot yet used, but reserved for interrupt and timing
+- WiFiManager
+- ESP8266 Web Server
+- Streaming library, used in the wwwServer part
+- AES library (taken from ideetron.nl) for downstream messages
+- Time
+
+For convenience, the libraries are also found in this gitshub repository in the libraries directory. However, they are NOT part of the ESP 1channel gateway and may have their own licensing.
+However, these libraries are not part of the single-channel Gateway software.
+
+## Connections
+
+See http://things4u.github.io in the hardware section for building and connection instructions
+
+
+## Configuration
+
+There are two ways of changing the configuration:
+
+1. Changing the ESP-sc-gway.h file at compile-time
+2. Run the http://<gateway-IP> web interface to change setting at complie time.
+
+### Connect to WiFi with WiFiManager
+
+The easiest way to configure the Gateway on WiFi is by using the WiFimanager function. This function works out of the box. WiFiManager will put the gateway in accesspoint mode so that you can connect to it as a WiFi accesspoint. 
+
+The standard access point name used by the gateway is "ESP8266 Gway" and its password is "ttnAutoPw". After binding to the access point with your mobile phone or computer, go to htp://192.168.4.1 in a browser and tell the gateway to which WiFi network you want it to connect, and specify the password.
+
+The gateway will then reset and bind to the given network. If all goes well you are now set and the ESP8266 will remember the network that it must connect to. NOTE: As long as the accesspoint that the gateway is bound to is present, the gateway will not any longer work with the wpa list of known access points.
+If necessary, you can delete the current access point in the webserver and power cycle the gateway to force it to read the wpa array again.
+
+
+Note: All settings and the more advanced features can be set by editing the configuration file (see the next section). 
+
+
+### Editing ESP-sc-gway.h
+
+All user configurable settings are put in the ESP-sc-gway.h file as much as possible.
+The most important things to configure to your own environment are:
+
+- Set the _SPREADING factor to the desired SF7, SF8 - SF12 value. Please note that the default frequency used is 868.1 MHz which can be changed in the loraModem.h file.
+- In order to have the gateway send downlink messages on the pre-set spreading factor and on the default frequency, you have to set the _STRICT_1Ch parameter to 1. Note that when it is not set to 1, the gateway will respond to downlink requests with the frequency and spreading factor set by the backend server. And at the moment TTN responds to downlink messages for SF9-SF12 in the RX2 timeslot and with frequency 869.525MHz and on SF12 (according to the LoRa standard when sending in the RX2 timeslot). Please 
+- static char *wpa[WPASIZE][2] contains the array of known WiFi access points the Gateway will connect to.
+Make sure that the dimensions of the array are correctly defined in the WPASIZE settings. 
+Note: When the WiFiManager software is enabled (it is by default) there must at least be one entry in the wpa file, wpa[0] is used for storing WiFiManager information.
+- Only the sx1276 (and HopeRF 95) radio modules are supported at this time. The sx1272 code should be 
+working without much work, but as I do not have one of these modules available I cannot test this.
+- This software allows to connect to 2 servers at the same time (as most gateways do BTW). 
+Make sure that you set:
+
+ \#define _THINGPORT 1701							// Your UDP server should listen to this port  
+ \#define _THINGSERVER "your_server.com"			// Server URL of the LoRa udp.js server program  
+
+- Set the identity parameters for your gateway:  
+// Gateway Ident definitions, please set location, email and description.  
+
+\#define _DESCRIPTION "ESP-Gateway"  
+\#define _EMAIL "your.email@provider.com"  
+\#define _PLATFORM "ESP8266"  
+\#define _LAT 52.00  
+\#define _LON 5.00  
+\#define _ALT 0  
+
+
+### Lora Radio Defaults:  
+
+- LoRa:   SF9 at 868.1 Mhz
+- Server:  
+  \#define _TTNSERVER "router.eu.thethings.network"  
+  \#define _TTNPORT 1700  
+  
+  These two settings are mandatory and should point to the standard servers of TTN
+  40.114.249.243, port 1700 
+  
+Edit .h file (ESP-sc-gway.h) to change configuration (look for: "Configure these values!").
+
+### Webserver
+
+The built-in webserver can be used to display status and debugging information. It can be accessed with the following URL: http://YourGatewayIP:80 The webserver shows various configuration settings as well as providing functions to set parameters.
+
+The following parameters can be set using the webServer. 
+- Debug Level (0-4)
+- CAD mode on or off (STD mode)
+- Switch frequency hopping on and off
+- When frequency Hoppin is off: Select the frequency the gateway will work on
+- When CAD mode is off: Select the Spreading Factor (SF) the gateway will work with
+
+
+
+# To DO
+The following things are still on my wish list to make to the single channel gateway:
+- Receive downstream message with commands form the server. These can be used to configure
+  the gateway through downlink messages (such as setting the SF)
+- Repair the _loraSensor functions for use with TTN
+
+# Release Notes
+
+The Gateay timestamps are according to the LoRa specification: 
+- Receive_Delay1 1s
+- Receive Delay2	2s (starting after Receive_Delay1)
+- Join_Accept_Delay1 5s
+- Join_Accept_Delay2 6s
+
+## Releases
+
+New features in version 4.0.4 (June 24, 2017):
+
+- Review of the _wwwServer.ino file. Repaired some of the bugs causing crashes of the webserver.
+- 
+
+New features in version 4.0.3 (June 22, 2017):
 
 - Added CMAC functions so that the sensor functions work as expected over TTN
 - Webserver prints a page in chunks now, so that memory usage is lower and more heap is left over for variables
@@ -120,113 +262,8 @@ Not (yet) supported:
 - RX2 timeframe messages at frequency 869,525 MHz are not (yet) supported.
 - SF9-SF12 downlink messaging available but needs more testing
 
-## Dependencies
 
-The software is dependent on several pieces of software, the Arduino IDE for ESP8266 
-being the most important. Several other libraries are also used by this program, make sure you install those libraries with the IDE:
-
-- gBase64 library, The gBase library is actually a base64 library made 
-	by Adam Rudd (url=https://github.com/adamvr/arduino-base64). I changed the name because I had
-	another base64 library installed on my system and they did not coexist well.
-- Time library (http://playground.arduino.cc/code/time)
-- Arduino JSON; Needed to decode downstream messages
-- SimpleTimer; ot yet used, but reserved for interrupt and timing
-- WiFiManager
-- ESP8266 Web Server
-- Streaming library, used in the wwwServer part
-- AES library (taken from ideetron.nl) for downstream messages
-- Time
-
-For convenience, the libraries are also found in this gitshub repository in the libraries directory. However, they are NOT part of the ESP 1channel gateway and may have their own licensing.
-However, these libraries are not part of the single-channel Gateway software.
-
-## Connections
-
-See http://things4u.github.io in the hardware section for building
-and connection instructions
-
-## Configuration
-
-### Connect to WiFI with WiFiManager
-
-The easiest way to configure the Gateway on WiFi is by using the WiFimanager function. This function works out of the box. WiFiManager will put the gateway in accesspoint mode so that you can connect to it as a WiFi accesspoint. 
-
-The standard access point name used by the gateway is "ESP8266 Gway" and its password is "ttnAutoPw". After binding to the access point with your mobile phone or computer, go to htp://192.168.4.1 in a browser and tell the gateway to which WiFi network you want it to connect, and specify the password.
-
-The gateway will then reset and bind to the given network. If all goes well you are now set and the ESP8266 will remember the network that it must connect to. NOTE: As long as the accesspoint that the gateway is bound to is present, the gateway will not any longer work with the wpa list of known access points.
-If necessary, you can delete the current access point in the webserver and power cycle the gateway to force it to read the wpa array again.
-
-
-Note: All settings and the more advanced features can be set by editing the configuration file (see the next section). 
-
-### Editing ESP-sc-gway.h
-
-All user configurable settings are put in the ESP-sc-gway.h file as much as possible.
-The most important things to configure to your own environment are:
-
-- Set the _SPREADING factor to the desired SF7, SF8 - SF12 value. Please note that the default frequency used is 868.1 MHz which can be changed in the loraModem.h file.
-- In order to have the gateway send downlink messages on the pre-set spreading factor and on the default frequency, you have to set the _STRICT_1Ch parameter to 1. Note that when it is not set to 1, the gateway will respond to downlink requests with the frequency and spreading factor set by the backend server. And at the moment TTN responds to downlink messages for SF9-SF12 in the RX2 timeslot and with frequency 869.525MHz and on SF12 (according to the LoRa standard when sending in the RX2 timeslot). Please 
-- static char *wpa[WPASIZE][2] contains the array of known WiFi access points the Gateway will connect to.
-Make sure that the dimensions of the array are correctly defined in the WPASIZE settings. 
-Note: When the WiFiManager software is enabled (it is by default) there must at least be one entry in the wpa file, wpa[0] is used for storing WiFiManager information.
-- Only the sx1276 (and HopeRF 95) radio modules are supported at this time. The sx1272 code should be 
-working without much work, but as I do not have one of these modules available I cannot test this.
-- This software allows to connect to 2 servers at the same time (as most gateways do BTW). 
-Make sure that you set:
-
- \#define _THINGPORT 1701							// Your UDP server should listen to this port  
- \#define _THINGSERVER "your_server.com"			// Server URL of the LoRa udp.js server program  
-
-- Set the identity parameters for your gateway:  
-// Gateway Ident definitions, please set location, email and description.  
-
-\#define _DESCRIPTION "ESP-Gateway"  
-\#define _EMAIL "your.email@provider.com"  
-\#define _PLATFORM "ESP8266"  
-\#define _LAT 52.00  
-\#define _LON 5.00  
-\#define _ALT 0  
-
-
-### Lora Radio Defaults:  
-
-- LoRa:   SF9 at 868.1 Mhz
-- Server:  
-  \#define _TTNSERVER "router.eu.thethings.network"  
-  \#define _TTNPORT 1700  
-  
-  These two settings are mandatory and should point to the standard servers of TTN
-  40.114.249.243, port 1700 
-  
-Edit .h file (ESP-sc-gway.h) to change configuration (look for: "Configure these values!").
-
-### Webserver
-
-The built-in webserver can be used to display status and debugging information. It can be accessed with the following URL: http://YourGatewayIP:80 The webserver shows various configuration settings as well as providing functions to set parameters.
-
-The following parameters can be set using the webServer. 
-- Debug Level (0-4)
-- CAD mode on or off (STD mode)
-- Switch frequency hopping on and off
-- When frequency Hoppin is off: Select the frequency the gateway will work on
-- When CAD mode is off: Select the Spreading Factor (SF) the gateway will work with
-
-## To DO
-The following things are still on my wish list to make to the single channel gateway:
-- Receive downstream message with commands form the server. These can be used to configure
-  the gateway through downlink messages (such as setting the SF)
-- Repair the _loraSensor functions for use with TTN
-
-## Notes
-
-The Gateay timestamps are according to the LoRa specification: 
-- Receive_Delay1 1s
-- Receive Delay2	2s (starting after Receive_Delay1)
-- Join_Accept_Delay1 5s
-- Join_Accept_Delay2 6s
-
-
-## License
+# License
 
 The source files of the gateway sketch in this repository is made available under the MIT
 license. The libraries included in this repository are included for convenience only and all have their own license, and are not part of the ESP 1ch gateway code.
