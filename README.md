@@ -21,22 +21,21 @@ Maintained by Maarten Westenberg (mw12554@hotmail.com)
 This repository contains a proof-of-concept implementation of a single channel LoRaWAN gateway.
 The software implements a standard LoRa gateway with the following exceptions on changes:
 
--  The LoRa gateway is not a full gateway but implements just a one-channel/one frequency gateway. 
+-  This LoRa gateway is not a full gateway but implements just a one-channel/one frequency gateway. 
 The minimum amount of frequencies supported by a full gateway is 3, most suport 9 or more frequencies.
 This software started as a proof-of-concept to prove that a single low-cost RRFM95 chip which was present in almost every
-LoRa node Europe could be used as a cheap alternative to the far more expensive full gateways that were 
-making use of the 1301 chip.
+LoRa node in Europe could be used as a cheap alternative to the far more expensive full gateways that were 
+making use of the SX1301 chip.
 
 - As the software of this gateway will be used during the development phase of a project solution or in demo situations, 
 the software is flexible and can be easily configured according to environment or customer requirements. 
 There are two ways of interacting with the software: 1. Modifying the ESP-sc-gway.h fail at compile time allows the 
-administrator to set almost all parameters.
-2. Using the webinterface (http://<gateway_IP>) will allow aministrators to set and reset several of the 
+administrator to set almost all parameters. 2. Using the webinterface (http://<gateway_IP>) will allow administrators to set and reset several of the 
 parameters at runtime also.
 
 ### testing
 
-teh single channel gateway has been tested on a gateway with the Wemos D1 Mini, using a 
+The single channel gateway has been tested on a gateway with the Wemos D1 Mini, using a 
 HopeRF RFM95W transceiver.  The LoRa nodes tested are:
 
 - TeensyLC with HopeRF RFM95 radio
