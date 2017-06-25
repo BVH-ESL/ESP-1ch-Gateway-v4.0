@@ -744,7 +744,7 @@ int buildPacket(uint32_t tmst, uint8_t *buff_up, uint8_t *message, char messageL
 	statr[0].tmst = millis();
 	statr[0].ch= ifreq;
 	statr[0].prssi = prssi-rssicorr;
-	statr[0].rssi = readRegister(0x1B)-rssicorr;
+	statr[0].rssi = readRegister(REG_RSSI)-rssicorr;
 	statr[0].sf = readRegister(REG_MODEM_CONFIG2) >> 4;\
 	statr[0].node = ( message[1]<<24 | message[2]<<16 | message[3]<<8 | message[4] );
 	//sprintf(statr[0].node, "%02X %02X %02X %02X", message[4], message[3], message[2], message[1]);
@@ -764,7 +764,7 @@ int buildPacket(uint32_t tmst, uint8_t *buff_up, uint8_t *message, char messageL
 		Serial.print(F("Packet RSSI: "));
 		Serial.print(prssi-rssicorr);
 		Serial.print(F(" RSSI: "));
-		Serial.print(readRegister(0x1B)-rssicorr);
+		Serial.print(readRegister(REG_RSSI)-rssicorr);
 		Serial.print(F(" SNR: "));
 		Serial.print(SNR);
 		Serial.print(F(" Length: "));
@@ -1265,6 +1265,7 @@ void Interrupt_1()
 			
 			delayMicroseconds( RSSI_WAIT_DOWN );	// Wait some microseconds less
 			rssi = readRegister(REG_RSSI);			// Read the RSSI
+			//rssi = readRegister(REG_PKT_RSSI);			// Read the RSSI
 			//If we have low rssi value, go scan again
 			if (rssi < ( RSSI_LIMIT_DOWN )) {		// XXX RSSI might drop a little
 			

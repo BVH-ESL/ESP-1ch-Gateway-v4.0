@@ -89,6 +89,9 @@ Channel Activity Detection (CAD) is a function of the LoRa RFM95 chip to detect 
 These incoming messages might arrive on any of the well know spreading factors SF7-SF12. 
 By enabling CAD, the gateway can receive messages of any of the spreading factors.
 
+Actually it is used in normal operation to tell the receiver that another signal is using the 
+channel already.
+
 The CAD functionality comes at a (little) price: The chip will not be able to receive very weak signals as 
 the CAD function will use the RSSI register setting of the chip to determine whether or not it received a 
 signal (or just noise). As a result, very weak signals are not received which means that the range of the 
@@ -239,15 +242,16 @@ However, these libraries are not part of the single-channel Gateway software.
 See http://things4u.github.io in the hardware section for building and connection instructions.
 
 
-
-
-
-
 # To-DO
 
-The following things are still on my wish list to make to the single channel gateway:
+The following things are still on my wish list to make to the single channel gateway:  
+
 - Receive downstream message with commands form the server. These can be used to configure
   the gateway through downlink messages (such as setting the SF)
+- Implement over the Air updates
+- Use the SPIFFS for storing .css files
+- Use the SPIFFS for storing node data (for later analysis)
+- Get more reliable RSSI data out of the node in CAD mode
 
 
 # Release Notes
@@ -255,7 +259,7 @@ The following things are still on my wish list to make to the single channel gat
 New features in version 4.0.4 (June 24, 2017):
 
 - Review of the _wwwServer.ino file. Repaired some of the bugs causing crashes of the webserver.
-- 
+- Updated the README.md file with more cofniguration information
 
 New features in version 4.0.3 (June 22, 2017):
 

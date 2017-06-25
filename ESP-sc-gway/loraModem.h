@@ -149,8 +149,8 @@ volatile uint8_t mask;
 #define REG_IRQ_FLAGS               0x12
 #define REG_RX_NB_BYTES             0x13
 #define REG_PKT_SNR_VALUE			0x19
-#define REG_PKT_RSSI				0x1A
-#define REG_RSSI					0x1B	// See section 5.5.5
+#define REG_PKT_RSSI				0x1A	// latest package
+#define REG_RSSI					0x1B	// Current RSSI, section 6.4, or  5.5.5
 #define REG_HOP_CHANNEL				0x1C
 #define REG_MODEM_CONFIG1           0x1D
 #define REG_MODEM_CONFIG2           0x1E
@@ -160,10 +160,12 @@ volatile uint8_t mask;
 #define REG_MAX_PAYLOAD_LENGTH 		0x23
 #define REG_HOP_PERIOD              0x24
 #define REG_MODEM_CONFIG3           0x26
+#define REG_RSSI_WIDEBAND			0x2C
 
 #define REG_INVERTIQ				0x33
 #define REG_DET_TRESH				0x37				// SF6
 #define REG_SYNC_WORD				0x39
+#define REG_TEMP					0x3C
 
 #define REG_DIO_MAPPING_1           0x40
 #define REG_DIO_MAPPING_2           0x41
