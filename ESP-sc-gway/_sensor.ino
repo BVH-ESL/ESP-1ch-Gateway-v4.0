@@ -1,7 +1,7 @@
 // 1-channel LoRa Gateway for ESP8266
 // Copyright (c) 2016, 2017 Maarten Westenberg
-// Verison 4.0.4
-// Date: 2017-06-23
+// Verison 4.0.7
+// Date: 2017-07-22
 //
 // All rights reserved. This program and the accompanying materials
 // are made available under the terms of the MIT License
@@ -386,7 +386,7 @@ static void checkMic(uint8_t *buf, uint8_t len, uint8_t *key) {
 // NOTE: We do not need ANY LoRa functions here since we are on the gateway.
 // We only need to send a gateway message upstream that looks like a node message.
 //
-// XXX NOTE:: This function does NOT encrypt the sensor (yet), however the backend
+// NOTE:: This function does encrypt the sensorpayload, and the backend
 //		picks it up fine as decoder thinks it is a MAC message.
 //
 // Par 4.0 LoraWan spec:
@@ -394,11 +394,14 @@ static void checkMic(uint8_t *buf, uint8_t len, uint8_t *key) {
 // which is equal to
 //					( MHDR | ( FHDR | FPORT | FRMPAYLOAD ) | MIC )
 //
-//	This function makes the totalpackage and calculates MIC			
+//	This function makes the totalpackage and calculates MIC
+// Te maximum size of the message is: 12 + ( 9 + 2 + 64 ) + 4	
+// So message size should be lass than 128 bytes if Payload is limited to 64 bytes.
 // ----------------------------------------------------------------------------
-int sensorPacket(uint8_t * buff_up) {
+int sensorPacket() {
 
-	uint8_t message[64];
+	uint8_t buff_up[512];								// Declare buffer here to avoid exceptions
+	uint8_t message[64]={ 0 };							// Payload, init to 0
 	uint8_t mlength = 0;
 	uint32_t tmst = micros();
 	
@@ -451,12 +454,42 @@ int sensorPacket(uint8_t * buff_up) {
 	mlength += micPacket((uint8_t *)(message), mlength, (uint16_t)frameCount, 0);
 
 	// So now our package is ready, and we can send it up through the gateway interface
+	// Note Be aware that the sensor message (which is bytes) in message will be
+	// be expanded if the server expacts JSON messages.
 	//
-	int buffIndex = buildPacket(tmst, buff_up, message, mlength, true);
+	int buff_index = buildPacket(tmst, buff_up, message, mlength, true);
 	
 	frameCount++;
+	
+	// In order to save the memory, we only write the framecounter
+	// to EEPROM every 10 values. It also means that we will invalidate
+	// 10 value when restarting the gateway.
+	//
 	if (( frameCount % 10)==0) writeGwayCfg(CONFIGFILE);
-	return(buffIndex);
+	
+	//yield();								// XXX Can we remove this here?
+	
+	if (buff_index > 512) {
+		if (debug>0) Serial.println(F("sensorPacket:: ERROR buffer size too large"));
+		return(-1);
+	}
+	
+	sendUdp(buff_up, buff_index);
+
+	// Reset all RX lora stuff
+	_state = S_RX;
+	rxLoraModem();
+			
+	// If we now switch to S_SCAN, we have to hop too
+	if (_hop) { hop(); }
+
+	if (_cad) {
+		// Set the state to CAD scanning after receiving
+		_state = S_SCAN;						// Inititialise scanner
+		cadScanner();
+	}
+		
+	return(buff_index);
 }
 
 #endif //GATEWAYNODE==1

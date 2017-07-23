@@ -1,7 +1,7 @@
 // 1-channel LoRa Gateway for ESP8266
 // Copyright (c) 2016, 2017 Maarten Westenberg version for ESP8266
-// Version 4.0.4
-// Date: 2017-06-23
+// Version 4.0.7
+// Date: 2017-07-22
 //
 // 	based on work done by Thomas Telkamp for Raspberry PI 1ch gateway
 //	and many others.
@@ -55,7 +55,7 @@ int readConfig(const char *fn, struct espGwayConfig *c) {
 		
 		if (id == "SSID") {									// WiFi SSID
 			Serial.print(F("SSID=")); Serial.println(val);
-			(*c).ssid = val;
+			(*c).ssid = val;								// val contains ssid, we do NO check
 		}
 		if (id == "PASS") { 								// WiFi Password
 			Serial.print(F("PASS=")); Serial.println(val); 
@@ -81,12 +81,43 @@ int readConfig(const char *fn, struct espGwayConfig *c) {
 			Serial.print(F("CAD=")); Serial.println(val);
 			(*c).cad = (uint8_t) val.toInt();
 		}
-		if (id == "HOP") {									// CAD setting
+		if (id == "HOP") {									// HOP setting
 			Serial.print(F("HOP=")); Serial.println(val);
 			(*c).hop = (uint8_t) val.toInt();
 		}
+		if (id == "BOOTS") {								// BOOTS setting
+			Serial.print(F("BOOTS=")); Serial.println(val);
+			(*c).boots = (uint8_t) val.toInt();
+		}
+		if (id == "RESETS") {								// RESET setting
+			Serial.print(F("RESETS=")); Serial.println(val);
+			(*c).resets = (uint8_t) val.toInt();
+		}
+		if (id == "WIFIS") {								// WIFIS setting
+			Serial.print(F("WIFIS=")); Serial.println(val);
+			(*c).wifis = (uint8_t) val.toInt();
+		}
+		if (id == "VIEWS") {								// VIEWS setting
+			Serial.print(F("VIEWS=")); Serial.println(val);
+			(*c).views = (uint8_t) val.toInt();
+		}
+		if (id == "NODE") {									// NODE setting
+			Serial.print(F("NODE=")); Serial.println(val);
+			(*c).node = (uint8_t) val.toInt();
+		}
+		if (id == "REFR") {									// REFR setting
+			Serial.print(F("REFR=")); Serial.println(val);
+			(*c).refresh = (uint8_t) val.toInt();
+		}
+		if (id == "REENTS") {								// REENTS setting
+			Serial.print(F("REENTS=")); Serial.println(val);
+			(*c).reents = (uint8_t) val.toInt();
+		}
+		if (id == "NTPERR") {								// NTPERR setting
+			Serial.print(F("NTPERR=")); Serial.println(val);
+			(*c).ntpErr = (uint8_t) val.toInt();
+		}
 	}
-
 	f.close();
 	return(1);
 }
@@ -105,9 +136,10 @@ int writeGwayCfg(const char *fn) {
 	gwayConfig.debug = debug;
 	gwayConfig.cad = _cad;
 	gwayConfig.hop = _hop;
-#if GATEWAYNODE == 1
+#if GATEWAYNODE==1
 	gwayConfig.fcnt = frameCount;
-#endif	
+#endif
+
 	return(writeConfig(fn, &gwayConfig));
 }
 
@@ -138,6 +170,14 @@ int writeConfig(const char *fn, struct espGwayConfig *c) {
 	f.print("DEBUG"); f.print('='); f.print((*c).debug); f.print('\n');
 	f.print("CAD");  f.print('='); f.print((*c).cad); f.print('\n');
 	f.print("HOP");  f.print('='); f.print((*c).hop); f.print('\n');
+	f.print("NODE");  f.print('='); f.print((*c).node); f.print('\n');
+	f.print("BOOTS");  f.print('='); f.print((*c).boots); f.print('\n');
+	f.print("RESETS");  f.print('='); f.print((*c).resets); f.print('\n');
+	f.print("WIFIS");  f.print('='); f.print((*c).wifis); f.print('\n');
+	f.print("VIEWS");  f.print('='); f.print((*c).views); f.print('\n');
+	f.print("REFR");  f.print('='); f.print((*c).refresh); f.print('\n');
+	f.print("REENTS");  f.print('='); f.print((*c).reents); f.print('\n');
+	f.print("NTPERR");  f.print('='); f.print((*c).ntpErr); f.print('\n');
 	
 	f.close();
 	return(1);

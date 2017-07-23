@@ -1,7 +1,7 @@
 // 1-channel LoRa Gateway for ESP8266
 // Copyright (c) 2016, 2017 Maarten Westenberg version for ESP8266
-// Version 4.0.4
-// Date: 2017-06-23
+// Version 4.0.7
+// Date: 2017-07-22
 //
 // 	based on work done by Thomas Telkamp for Raspberry PI 1ch gateway
 //	and many other contributors.
@@ -44,6 +44,8 @@ int freqs [] = {
 uint32_t  freq = freqs[0];
 uint8_t	 ifreq = 0;								// Channel Index
 
+
+
 // Set the structure for spreading factor
 enum sf_t { SF6=6, SF7, SF8, SF9, SF10, SF11, SF12 };
 
@@ -52,16 +54,31 @@ enum sf_t { SF6=6, SF7, SF8, SF9, SF10, SF11, SF12 };
 enum state_t { S_INIT=0, S_SCAN, S_CAD, S_RX, S_RXDONE, S_TX };
 state_t _state;
 
+// rssi is measured at specific moments and reported on others
+// so we need to store the current value we like to work with
+uint8_t _rssi;	
+
 // In order to make the CAD behaviour dynamic we set a variable
-// when the CAD functions are defined.
+// when the CAD functions are defined. Value of 3 is minimum frequencies a
+// gateway should support to be fully LoRa compliant.
 #define NUM_HOPS 3
 
-bool _cad= (bool) _CAD;		// Set to true for Channel Activity Detection, only when dio1 connected
+bool _cad= (bool) _CAD;	// Set to true for Channel Activity Detection, only when dio1 connected
 bool _hop=false;		// experimental; frequency hopping. Only use when dio2 connected
 bool inHop=false;
 unsigned long nowTime=0;
 unsigned long hopTime=0;
 
+// Define whether we shoudl include protection for the interrupt()
+// routine to make it re-entrant (a second interrupt while still in first
+// invocation of the interrupt routine
+//	Assuming we need to protect against re entrance of interrupt handler
+//	bute we need not necessarily enable full re-entrance, 1 is a good value!
+#define REENTRANT 2
+#if REENTRANT>=1
+// Declare a variable that should keep track of us handling an interrupt.
+volatile bool inIntr = 0;
+#endif
 
 // Definition of the GPIO pins used by the Gateway
 struct pins {
@@ -76,7 +93,7 @@ struct pins {
 // SS 16 / D0
 } pins;
 
-// For ComResult gateway use the following settings
+// For ComResult gateway PCB use the following settings
 //struct pins {
 //	uint8_t dio0=5;		// GPIO5 / D1. For the Hallard board shared betweenDio0/DIO1/DIO2
 //	uint8_t dio1=4;		// GPIO4 / D2. Used for CAD, may or not be shared with DIO0
@@ -85,8 +102,9 @@ struct pins {
 //	uint8_t rst=0;		// Reset pin not used	
 //} pins;
 
-// In case STATISTICS==1 we define the last 10 
-// messages as statistics
+// STATR contains the statictis that are kept by message. 
+// Ech time a message is received or sent the statistics are updated.
+// In case STATISTICS==1 we define the last MAX_STAT messages as statistics
 #if STATISTICS >= 1
 struct stat_t {
 	unsigned long tmst;						// Time since 1970			
@@ -99,6 +117,10 @@ struct stat_t {
 // History of received uplink messages from nodes
 struct stat_t statr[MAX_STAT];
 
+// STATC contains the statistic that are gateway related and not per
+// message. Example: Number of messages received on SF7 or number of (re) boots
+// So where statr contains the statistics gathered per packet the statc
+// contains general statics of the node
 #if STATISTICS >= 2							// Only if we explicitely set it higher
 struct stat_c {
 	unsigned long sf7;						// Spreading factor 7
@@ -107,6 +129,9 @@ struct stat_c {
 	unsigned long sf10;						// Spreading factor 10
 	unsigned long sf11;						// Spreading factor 11
 	unsigned long sf12;						// Spreading factor 12
+	
+	uint16_t boots;							// Number of boots
+	uint16_t resets;
 } stat_c;
 struct stat_c statc;
 #endif
@@ -116,6 +141,7 @@ struct stat_c statc;
 volatile uint8_t flags;
 volatile uint8_t mask;
 
+// Do not change these setting for RSSI detection. They are used for CAD
 // Given the correction factor of 157, we can get to -118dB with this rating
 // XXX 40 works
 #define RSSI_LIMIT	39

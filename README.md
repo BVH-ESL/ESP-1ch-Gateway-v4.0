@@ -1,6 +1,6 @@
 # Single Channel LoRaWAN Gateway
 
-Version 4.0.4, June 24, 2017  
+Version 4.0.7, July 22, 2017  
 Author: M. Westenberg (mw12554@hotmail.com)  
 Copyright: M. Westenberg (mw12554@hotmail.com)  
 
@@ -39,6 +39,29 @@ The LoRa nodes tested are:
 - TeensyLC with HopeRF RFM95 radio
 - Arduino Pro-Mini (default Armega328 model, 8MHz 3.3V and 16MHz 3.3V)
 - ESP8266 based nodes with RFM95 transceivers.
+
+
+# Getting Started
+
+It is recommended to compile start the single channel gateway with as little modificatons as possible. 
+This section describes the minimum of configuration necessary to get a working gateway which than can be 
+configured further using the webpage.
+
+1. Unpack the source code including the libraries in a separate folder.
+2. Connect the gateway to a serial port of your computer, and configure that port in the IDE. 
+Switch on the Serial Monitor for the gateway. As the
+Wemos chip does not contain any code, you will probably see nothing on the Serial Monitor.
+3. Modify the _loraModem.h file and change the "struct pins" area and configure either for a traditional
+PCB or configure for a Hallard PCB where the dio0, dio1 and dio2 pins are shared. You HAVE to check this section.
+4. Edit the ESP-sc-gway.h file and adapt the wpas structure. `Make sure that the first line of this structure 
+remains empty and put the SSID and Password of your router on the second line of the array.
+5. Compiler the code and doenload the executable over USB to the gateway. If all is right, you should
+see the gateway starting up on the Serial Monitor.
+6. Note the IP address that the device receives from your router. Use that IP address in a browser on 
+your computer to connect to the gateway with the browser.
+
+Now your gateway should be running. Use the webpage to set "debug" to 1 and you should be able to see packages
+coming in.
 
 
 # Configuration
@@ -99,7 +122,39 @@ gateway will be reduced in CAD mode.
 
  \#define _CAD 1
 
+ 
+### Over the Air Updates (OTA)
 
+As from version 4.0.6 the gateway allows over the air updated if the setting A_OTA is on. 
+The over the air software requires once setting of the 4.0.6 version over USB to the gateway,
+after which the software is (default) enabled for use.
+
+The first release only supports OTA function using the IDE which in practice means the IDE has to 
+be on the same network segment as the gateway.
+
+Note: You have to use Bonjour software (Apple) on your network somewhere. A version is available
+for most platforms (shipped with iTunes for windows for example). The Bonjour software enables the
+gateway to use mDNS to resolve the gateway ID set by OTA after which download ports show up in the IDE.
+
+Todo: The OTA software has not (yet) been tested in conjuction with the WiFiManager software.
+
+ \#define A_OTA 1  
+
+
+
+### Enable Webserver
+
+This setting enables the webserver. Although the webserver itself takes a lot of memory, it greatly helps 
+to configure the gatewayat run-time and inspects its behaviour. It also provides statistics of last messages received.
+The A_REFRESH parameter defines whether the webserver should renew every X seconds.
+
+ \#define A_SERVER 1				// Define local WebServer only if this define is set  
+ \#define A_REFRESH 0				// Will the webserver refresh or not?  
+ \#define A_SERVERPORT 80			// local webserver port  
+ \#define A_MAXBUFSIZE 192			// Must be larger than 128, but small enough to work  
+
+ The A_REFRESH parameter determines the refresh frequency of the webserver.  
+ 
 ### Strict LoRa behaviour
 
 In order to have the gateway send downlink messages on the pre-set spreading factor and on the default frequency, 
@@ -176,18 +231,6 @@ The gateway will then reset and bind to the given network. If all goes well you 
 If necessary, you can delete the current access point in the webserver and power cycle the gateway to force it to read the wpa array again.
 
 
-### Enable Webserver
-
-This setting enables the webserver. Although the webserver itself takes a lot of memory, it greatly helps 
-to configure the gatewayat run-time and inspects its behaviour. It also provides statistics of last messages received.
-The A_REFRESH parameter defines whether the webserver should renew every X seconds.
-
- \#define A_SERVER 1				// Define local WebServer only if this define is set
- \#define A_REFRESH 1				// Will the webserver refresh or not?
- \#define A_SERVERPORT 80			// local webserver port
- \#define A_MAXBUFSIZE 192			// Must be larger than 128, but small enough to work
-
- 
 ### Other Settings
 
 - static char *wpa[WPASIZE][2] contains the array of known WiFi access points the Gateway will connect to.
@@ -251,93 +294,8 @@ The following things are still on my wish list to make to the single channel gat
 - Implement over the Air updates
 - Use the SPIFFS for storing .css files
 - Use the SPIFFS for storing node data (for later analysis)
-- Get more reliable RSSI data out of the node in CAD mode
+- Get more reliable RSSI data out of the node in CAD mode (done, user PRSSI, testing)
 
-
-# Release Notes
-
-New features in version 4.0.4 (June 24, 2017):
-
-- Review of the _wwwServer.ino file. Repaired some of the bugs causing crashes of the webserver.
-- Updated the README.md file with more cofniguration information
-
-New features in version 4.0.3 (June 22, 2017):
-
-- Added CMAC functions so that the sensor functions work as expected over TTN
-- Webserver prints a page in chunks now, so that memory usage is lower and more heap is left over for variables
-- Webserver does refresh every 60 seconds
-- Implemented suggested change of M. for answer to PKT_PULL_RESP
-- Updated README.md to correctly displa all headers
-- Several small bug fixes
-
-New features in version 4.0.0 (January 26, 2017)):
-
-- Implement both CAD (Channel Activity Detection) and HOP functions (HOP being experimental)
-- Message history visible in web interface
-- Repaired the WWW server memory leak (due to String assignments)
-- Still works on one interrupt line (GPIO15), or can be configured to work with 2 interrupt lines for dio0 and dio1
-  for two or more interrupt lines (better performance for automatic SF setting?)
-- Webserver with debug level 3 and level 4 (for interrupt testing).
-  dynamic setting thorugh the web interface. Level 3 and 4 will show more info
-  on sf, rssi, interrupt flags etc.
-- Tested on Arduino IDE 1.18.0
-- See http://things4u.github.io for documentation
-
-New features in version 3.3.0 (January 1, 2017)):
-
-- Redesign of the Webserver interface
-- Use of the SPIFFS filesystem to store SSID, Frequency, Spreading Factor and Framecounter to survice reboots and resets of the ESP8266
-- Possibility to set the Spreading Factor dynamically throug the web interface
-- Possibility to set the Frequency in the web interface
-- Reset the Framecounter in te webinterface
-
-New features in version 3.2.2 (December 29, 2016)):
-
-- Repair the situation where WIFIMANAGER was set to 0 in the ESP-sc-gway.h file. The sketch would not compile which is now repaired
-- The compiler would issue a set of warnings related to the ssid and passw setting in the ESP-sc-geway.h file. Compiler was complaining (and it should) because char* were statically initialised and modified in the code.
-
-New features in version 3.2.1 (December 20, 2016)):
-
-- Repair the status messages to the server. All seconds, minutes, hours etc. are now reported in 2 digits. The year is reported in 4 digits.
-
-New features in version 3.2.0 (December 08, 2016)):
-
-- Several bugfixes
-
-New features in version 3.1 (September 29, 2016)):
-
-- In the ESP-sc-gway.h it is possible to set the gateway as sensor node as well. Just set the DevAddr and AppSKey in the _sensor.ino file and be able to forward any sensor or other values to the server as if they were coming from a LoRa node.
-- If the #define _STRICT_1CH is set (to 1) then the system will be able to send downlink messages to LoRa nodes that are strict 1-channel devices (all frequencies but frequency 0 are disabled and Spreading Factor (SF) is fixed to one value).
-- Code clean-up. The code has been made smaller in the area of loraWait() functions and where the radio is initiated for receiving of transmitting messages.
-- Several small bug fixes
-- Licensing, the license has been changed to MIT
-
-New features in version 3.0 (September 27, 2016):
-
-- WiFiManager support
-- Limited SPIFF (filesystem) support for persistent data storage
-- Added functions to webserver. Webserver port now 80 by default (!)
-
-Other
-
-- Supports ABP nodes (TeensyLC and Arduino Pro-mini)
-- Supports OTAA functions on TeensyLC and Arduino Pro-Mini (not all of them) for SF7 and SF8.
-- Supports SF7, SF8. SF7 is tested for downstream communication
-- Listens on configurable frequency and spreading factor
-- Send status updates to server (keepalive)
-- PULL_DATA messages to server
-- It can forward messages to two servers at the same time (and read from them as well)
-- DNS support for server lookup
-- NTP Support for time sync with internet time servers
-- Webserver support (default port 8080)
-- .h header file for configuration
-
-Not (yet) supported:
-
-- SF7BW250 modulation
-- FSK modulation
-- RX2 timeframe messages at frequency 869,525 MHz are not (yet) supported.
-- SF9-SF12 downlink messaging available but needs more testing
 
 
 # License

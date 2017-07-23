@@ -1,7 +1,7 @@
 // 1-channel LoRa Gateway for ESP8266
 // Copyright (c) 2016, 2017 Maarten Westenberg 
-// Version 4.0.4
-// Date: 2017-06-23
+// Version 4.0.7
+// Date: 2017-07-22
 //
 // Based on work done by Thomas Telkamp for Raspberry PI 1ch gateway
 // and many others.
@@ -29,8 +29,10 @@
 #if GATEWAYMGT==1
 
 #if !defined _THINGPORT
-#error "The managent functions only work over _THINGPORT and not over _TTNPORT"
+#error "The management functions only work over _THINGPORT and not over _TTNPORT"
 #endif
+
+
 
 // ----------------------------------------------------------------------------
 // Ths function gateway_mgt is called in the UDP Receive function after

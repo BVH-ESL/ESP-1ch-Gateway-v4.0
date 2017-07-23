@@ -1,7 +1,7 @@
 // 1-channel LoRa Gateway for ESP8266
 // Copyright (c) 2016, 2017 Maarten Westenberg version for ESP8266
-// Version 4.0.4
-// Date: 2017-06-24
+// Version 4.0.7
+// Date: 2017-07-21
 //
 // 	based on work done by Thomas Telkamp for Raspberry PI 1ch gateway
 //	and many others.
@@ -19,17 +19,13 @@
 //
 // ----------------------------------------------------------------------------------------
 
+#define VERSION " ! V. 4.0.7 Ota, Refresh, Sensor, Re=2, Hallard; 170721a"
 
-// Initial value of debug parameter. Can be hanged using the admin webserver
+// This value of DEBUG determines whether some parts of code get compiled.
+// Also this is the initial value of debug parameter. 
+// The value can be changed using the admin webserver
 // For operational use, set initial DEBUG vaulue 0
 #define DEBUG 1
-
-
-// Definitions for the admin webserver
-#define A_SERVER 1				// Define local WebServer only if this define is set
-#define A_REFRESH 0
-#define A_SERVERPORT 80			// local webserver port
-#define A_MAXBUFSIZE 192		// Must be larger than 128, but small enough to work
 
 
 // The spreading factor is the most important parameter to set for a single channel
@@ -38,9 +34,39 @@
 // and to one spreading factor only.
 // This parameters contains the default value of SF, the actual version can be set with
 // the webserver and it will be stored in SPIFF
+// NOTE: The frequency is set in the loraModem.h file and is default 868.100000 MHz.
 #define _SPREADING SF9
 
-// NOTE: The frequency is set in the loraModem.h file and is default 868.100000 MHz.
+
+// Channel Activity Detection
+// This function will scan for valid LoRa headers and determine the Spreading 
+// factor accordingly. If set to 1 we will use this function which means the 
+// 1-channel gateway will become even more versatile. If set to 0 we will use the
+// continuous listen mode.
+// Using this function means that we HAVE to use more dio pins on the RFM95/sx1276
+// device and also connect enable dio1 to detect this state. 
+#define _CAD 1
+
+
+// Definitions for the admin webserver
+#define A_SERVER 1				// Define local WebServer only if this define is set
+#define A_REFRESH 1				// Will the webserver refresh or not?
+#define A_SERVERPORT 80			// local webserver port
+#define A_MAXBUFSIZE 192		// Must be larger than 128, but small enough to work
+
+// Definitions for over the air updates
+//
+#define A_OTA 1
+
+
+// Gather statistics on sensor and Wifi status
+// 0= No statistics
+// 1= Keep track of messages statistics, number determined by MAX_STAT
+// 2= See 1 + Keep track of messages received PER SF
+#define STATISTICS 2
+// Maximum number of statistics records gathered. 20 is a good maximum (memory intensive)
+#define MAX_STAT 20
+			
 
 // Single channel gateways if they behave strict should only use one frequency 
 // channel and one spreading factor. However, the TTN backend replies on RX2 
@@ -54,24 +80,6 @@
 //		in order to receive downlink messages
 #define _STRICT_1CH	0
 
-// Channel Activity Detection
-// This function will scan for valid LoRa headers and determine the Spreading 
-// factor accordingly. If set to 1 we will use this function which means the 
-// 1-channel gateway will become even more versatile. If set to 0 we will use the
-// continuous listen mode.
-// Using this function means that we HAVE to use more dio pins on the RFM95/sx1276
-// device and also connect enable dio1 to detect this state. 
-#define _CAD 1
-
-// Gather statistics on sensor and Wifi status
-// 0= No statistics
-// 1= Keep track of messages statistics, number determined by MAX_STAT
-// 2= See 1 + Keep track of messages received PER SF
-#define STATISTICS 2
-// Maximum number of statistics records gathered. 20 is a good maximum (memory intensive)
-#define MAX_STAT 20
-			
-
 // Allows configuration through WifiManager AP setup. Must be 0 or 1					
 #define WIFIMANAGER 0
 
@@ -80,12 +88,14 @@
 #define AP_NAME "ESP8266-Gway-Things4U"
 #define AP_PASSWD "ttnAutoPw"
 
+
 // Defines whether the gateway will also report sensor/status value on MQTT
-// after all, a gateway can be a mote to the system as well
-// Set its LoRa address and key below
+// after all, a gateway can be a node to the system as well
+// Set its LoRa address and key below in this file
 // See spec. para 4.3.2
-#define GATEWAYNODE 0
+#define GATEWAYNODE 1
 #define _CHECK_MIC 0
+
 
 // Define whether we want to manage the gateway over UDP (next to management 
 // thru webinterface).
@@ -121,13 +131,13 @@
 #define _TTNPORT 1700						// Standard port for TTN
 #define _TTNSERVER "router.eu.thethings.network"
 
-// If yoyur have a second back-end server defined such as semtech or loriot.io
-// your can define _THINGSPORT and _THINGSERVER
+// If you have a second back-end server defined such as Semtech or loriot.io
+// your can define _THINGSPORT and _THINGSERVER with your own value.
 // If not, make sure that you do not defined these.
 // Port is UDP port in this program
 
-#define _THINGPORT 1700						// dash.westenberg.org:8057
-#define _THINGSERVER "yourserver.com"		// Server URL of the LoRa-udp.js handler
+//#define _THINGPORT 1700
+//#define _THINGSERVER "yourserver.com"		// Server URL of the LoRa-udp.js handler
 
 // Gateway Ident definitions
 #define _DESCRIPTION "ESP Gateway"
@@ -137,6 +147,7 @@
 #define _LON 5.800
 #define _ALT 14
 
+// Serial Port speed
 #define _BAUDRATE 115200		// Works for debug messages to serial momitor
 
 // ntp
@@ -169,24 +180,38 @@ struct wpas {
 	char passw[64];
 };
 
+// Please fill in at least ONE SSID and password from your own WiFI network
+// below. This is needed to get the gateway working
+// Note: DO NOT use the first and the last line of the stucture, these should be empty.
 wpas wpa[] = {
-	{ "" , "" },
+	{ "" , "" },								// Reserved for WiFi Manager
 	{ "your_router_1", "1st_password"},
-	{ "your_router_2", "2n_password"},
+	{ "your_router_2", "2nd_password"},
 	{ "", ""}									// spare line
 };
 
 // Definition of the configuration record that is read at startup and written
 // when settings are changed.
 struct espGwayConfig {
-	String ssid;				// type String is more flexible and allows assignments
-	String pass;
-	uint8_t ch;					// index to freqs array, freqs[ifreq]=868100000 default
 	uint16_t fcnt;				// =0 as init value	XXX Could be 32 bit in size
+	uint16_t boots;				// Number of restarts made by the gateway after reset
+	uint16_t resets;			// Number of statistics resets
+	uint16_t views;				// Number of sendWebPage() calls
+	uint16_t wifis;				// Number of WiFi Setups
+	uint16_t reents;			// Number of re-entrant interrupt handler calls
+	uint16_t ntpErr;			// Number of UTP requests that failed
+	
+	uint8_t ch;					// index to freqs array, freqs[ifreq]=868100000 default
 	uint8_t sf;					// range from SF7 to SF12
 	uint8_t debug;				// range 0 to 4
-	bool cad;
-	bool hop;
+	
+	bool cad;					// is CAD enabled?
+	bool hop;					// Is HOP enabled (Note: SHould be disabled)
+	bool node;					// Is gateway node enabled
+	bool refresh;				// Is WWW browser refresh enabled
+	
+	String ssid;				// SSID of the last connected WiFi Network
+	String pass;				// Password
 } gwayConfig;
 
 
