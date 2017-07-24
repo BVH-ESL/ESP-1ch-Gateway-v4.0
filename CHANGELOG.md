@@ -21,6 +21,8 @@ New features in version 4.0.7 (July 22, 2017)
 - This release contains merely updates to memory leaks and patches to avoid chip resets etc.
 - The webinterface allows the user to see more parameters and has buttons to set/reset these parameters.
 - By setting debug >=2, the webinterface will display more information.
+- The gateway allows OTA (Over the Air) update. Please have an Apple "Bonjour" somewhere on your network 
+(included in iTunes) and you will see the network port in the "Port" section of your IDE.
 
 New features in version 4.0.4 (June 24, 2017):
 

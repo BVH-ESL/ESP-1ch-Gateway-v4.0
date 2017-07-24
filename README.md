@@ -43,25 +43,27 @@ The LoRa nodes tested are:
 
 # Getting Started
 
-It is recommended to compile start the single channel gateway with as little modificatons as possible. 
+It is recommended to compile and start the single channel gateway with as little modificatons as possible. 
+This means that you should use the default settings in the configuration files as much as possible.
 This section describes the minimum of configuration necessary to get a working gateway which than can be 
 configured further using the webpage.
 
 1. Unpack the source code including the libraries in a separate folder.
 2. Connect the gateway to a serial port of your computer, and configure that port in the IDE. 
-Switch on the Serial Monitor for the gateway. As the
-Wemos chip does not contain any code, you will probably see nothing on the Serial Monitor.
+Switch on the Serial Monitor for the gateway. As the Wemos chip does not contain any code, you will probably 
+see nothing on the Serial Monitor.
 3. Modify the _loraModem.h file and change the "struct pins" area and configure either for a traditional
-PCB or configure for a Hallard PCB where the dio0, dio1 and dio2 pins are shared. You HAVE to check this section.
-4. Edit the ESP-sc-gway.h file and adapt the wpas structure. `Make sure that the first line of this structure 
+(=Comresult) PCB or configure for a Hallard PCB where the dio0, dio1 and dio2 pins are shared. You HAVE to check 
+this section.
+4. Edit the ESP-sc-gway.h file and adapt the "wpas" structure. `Make sure that the first line of this structure 
 remains empty and put the SSID and Password of your router on the second line of the array.
-5. Compiler the code and doenload the executable over USB to the gateway. If all is right, you should
+5. Compile the code and doenload the executable over USB to the gateway. If all is right, you should
 see the gateway starting up on the Serial Monitor.
 6. Note the IP address that the device receives from your router. Use that IP address in a browser on 
 your computer to connect to the gateway with the browser.
 
 Now your gateway should be running. Use the webpage to set "debug" to 1 and you should be able to see packages
-coming in.
+coming in on the Serial monitor.
 
 
 # Configuration
