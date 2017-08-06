@@ -1,7 +1,7 @@
 // 1-channel LoRa Gateway for ESP8266
 // Copyright (c) 2016, 2017 Maarten Westenberg version for ESP8266
-// Version 4.0.7
-// Date: 2017-07-22
+// Version 4.0.8
+// Date: 2017-08-05
 //
 // 	based on work done by Thomas Telkamp for Raspberry PI 1ch gateway
 //	and many others.
@@ -502,10 +502,11 @@ static void initLoraModem()
 #endif
 {
 	_state = S_INIT;
+	// Reset the transceiver chip with a pulse of 10 mSec
 	digitalWrite(pins.rst, HIGH);
-    delay(100);
+	delayMicroseconds(10000);
     digitalWrite(pins.rst, LOW);
-    delay(100);
+	delayMicroseconds(10000);
 	
 	// 1 Set LoRa Mode
 	opmodeLora();												// set register 0x01 to 0x80
@@ -530,9 +531,10 @@ static void initLoraModem()
     } else {
         // sx1276?
         digitalWrite(pins.rst, LOW);
-        delay(100);
+		delayMicroseconds(10000);
         digitalWrite(pins.rst, HIGH);
-        delay(100);
+		delayMicroseconds(10000);
+		
         version = readRegister(REG_VERSION);
         if (version == 0x12) {
             // sx1276
@@ -835,6 +837,24 @@ int buildPacket(uint32_t tmst, uint8_t *buff_up, uint8_t *message, char messageL
 		Serial.println();
 		yield();
 	}
+#endif
+
+// Show received message status on OLED display
+#if OLED==1
+      display.clear();
+      display.setFont(ArialMT_Plain_16);
+      display.setTextAlignment(TEXT_ALIGN_LEFT);
+      char timBuff[20];
+      sprintf(timBuff, "%02i:%02i:%02i", hour(), minute(), second());
+      display.drawString(0, 0, "Time: " );
+      display.drawString(40, 0, timBuff);
+      display.drawString(0, 16, "RSSI: " );
+      display.drawString(40, 16, String(prssi-rssicorr));
+      display.drawString(0, 32, "SNR: " );
+      display.drawString(40, 32, String(SNR) );
+      display.drawString(0, 48, "LEN: " );
+      display.drawString(40, 48, String((int)messageLength) );
+      display.display();
 #endif
 			
 	int j;
@@ -1213,8 +1233,6 @@ void Interrupt_0()
 		// Clear the CADDONE flag
 		writeRegister(REG_IRQ_FLAGS, IRQ_LORA_CDDONE_MASK);
 
-		//delayMicroseconds(250);						//XXX MMM Wait some microseconds to settle
-
 		opmode(OPMODE_CAD);
 		
 		rssi = readRegister(REG_RSSI);				// Read the RSSI
@@ -1329,9 +1347,11 @@ void Interrupt_1()
 	  // If we receive an interrupt on dio1 and _state==S_CAD or S_SCAN
 	  case S_CAD:
 	  case S_SCAN:	
-  
+
+		// Intr=IRQ_LORA_CDDETD_MASK
 		// We have to set the sf based on a strong RSSI for this channel
 		// So we scan this SF and if not high enough ... next
+		//
 		if (intr & IRQ_LORA_CDDETD_MASK) {
 		
 			if (debug >=3) {
@@ -1354,22 +1374,23 @@ void Interrupt_1()
 			delayMicroseconds( RSSI_WAIT_DOWN );	// Wait some microseconds less
 			rssi = readRegister(REG_RSSI);			// Read the RSSI
 			_rssi = rssi;							// Read the RSSI in the state variable
+
 			//If we have low rssi value, go scan again
-			if (rssi < ( RSSI_LIMIT_DOWN )) {		// XXX RSSI might drop a little
-			
-				if (debug >= 3) {
-					Serial.print(F("DIO1:: reset S_SCAN, rssi=")); Serial.print(rssi); Serial.print(F(", ")); 
-					printState(3);
-				}
-				if (_hop) { hop(); }				// XXX
-				_state = S_SCAN;
-				cadScanner();
-			}
-			// else we are going to read and get RXDONE of RXTOUT
-			else if (debug >= 3 ) {
-				Serial.print(F("DIO1:: Start S_RX, "));
-				printState(3);
-			}
+//			if (rssi < ( RSSI_LIMIT_DOWN )) {		// XXX RSSI might drop a little
+//			
+//				if (debug >= 3) {
+//					Serial.print(F("DIO1:: reset S_SCAN, rssi=")); Serial.print(rssi); Serial.print(F(", ")); 
+//					printState(3);
+//				}
+//				if (_hop) { hop(); }				// XXX
+//				_state = S_SCAN;
+//				cadScanner();
+//			}
+//			// else we are going to read and get RXDONE of RXTOUT
+//			else if (debug >= 3 ) {
+//				Serial.print(F("DIO1:: Start S_RX, "));
+//				printState(3);
+//			}
 		}//if
 		else {
 			if (debug >=3) {
@@ -1447,7 +1468,9 @@ void ICACHE_RAM_ATTR Interrupt()
 void Interrupt()
 #endif
 {
+	uint8_t intr ;
 #if REENTRANT==1
+
 	// Make a sort of mutex by using a volatile variable
 	if (inIntr) {
 		gwayConfig.reents++;
@@ -1459,15 +1482,23 @@ void Interrupt()
 #endif	
 	flags = readRegister(REG_IRQ_FLAGS);
 	mask = readRegister(REG_IRQ_FLAGS_MASK);
-	uint8_t intr = flags & ( ~ mask );			// Only react on non masked interrupts
+	intr = flags & ( ~ mask );				// Only react on non masked interrupts
 
-	// Check for dio interrupts and invoke corresponding interrupt routine
-	if (intr & (IRQ_LORA_RXTOUT_MASK | IRQ_LORA_CDDETD_MASK | IRQ_LORA_FHSSCH_MASK)) { Interrupt_1(); }
+	// Check for dio1 interrupts and invoke corresponding interrupt routine
+	if (intr & (IRQ_LORA_RXTOUT_MASK | IRQ_LORA_CDDETD_MASK | IRQ_LORA_FHSSCH_MASK)) { 
+		Interrupt_1(); 
+	}
 
-	// dio0
-	if (intr & (IRQ_LORA_RXDONE_MASK | IRQ_LORA_TXDONE_MASK | IRQ_LORA_CDDONE_MASK)) { Interrupt_0(); }
+	flags = readRegister(REG_IRQ_FLAGS);
+	mask = readRegister(REG_IRQ_FLAGS_MASK);
+	intr = flags & ( ~ mask );				// Only react on non masked interrupts
 	
-	// Only for Frequency Hopping dio2, not used in this code
+	// Check for dio0 interrupts
+	if (intr & (IRQ_LORA_RXDONE_MASK | IRQ_LORA_TXDONE_MASK | IRQ_LORA_CDDONE_MASK)) { 
+		Interrupt_0(); 
+	}
+	
+	// Check for dio2 interrupts, Only for Frequency Hopping not used in this code
 	//if (intr & ( IRQ_LORA_FHSSCH_MASK )) { Interrupt_2(); }
 #if REENTRANT>=1
 	inIntr=false;

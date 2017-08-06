@@ -1,7 +1,7 @@
 // 1-channel LoRa Gateway for ESP8266
 // Copyright (c) 2016, 2017 Maarten Westenberg version for ESP8266
-// Version 4.0.7
-// Date: 2017-07-22
+// Version 4.0.8
+// Date: 2017-08-05
 //
 // 	based on work done by Thomas Telkamp for Raspberry PI 1ch gateway
 //	and many others.
@@ -117,6 +117,10 @@ int readConfig(const char *fn, struct espGwayConfig *c) {
 			Serial.print(F("NTPERR=")); Serial.println(val);
 			(*c).ntpErr = (uint8_t) val.toInt();
 		}
+		if (id == "NTPS") {									// NTPS setting
+			Serial.print(F("NTPS=")); Serial.println(val);
+			(*c).ntps = (uint8_t) val.toInt();
+		}
 	}
 	f.close();
 	return(1);
@@ -152,6 +156,7 @@ int writeConfig(const char *fn, struct espGwayConfig *c) {
 	if (!SPIFFS.exists(fn)) {
 		Serial.print("WARNING:: writeConfig, file does not exist, formatting ");
 		SPIFFS.format();
+		// XXX make all initial declarations here if config vars need to have a value
 		Serial.println(fn);
 	}
 	File f = SPIFFS.open(fn, "w");
@@ -178,6 +183,7 @@ int writeConfig(const char *fn, struct espGwayConfig *c) {
 	f.print("REFR");  f.print('='); f.print((*c).refresh); f.print('\n');
 	f.print("REENTS");  f.print('='); f.print((*c).reents); f.print('\n');
 	f.print("NTPERR");  f.print('='); f.print((*c).ntpErr); f.print('\n');
+	f.print("NTPS");  f.print('='); f.print((*c).ntps); f.print('\n');
 	
 	f.close();
 	return(1);

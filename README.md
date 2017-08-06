@@ -1,6 +1,6 @@
 # Single Channel LoRaWAN Gateway
 
-Version 4.0.7, July 22, 2017  
+Version 4.0.8, August 06, 2017  
 Author: M. Westenberg (mw12554@hotmail.com)  
 Copyright: M. Westenberg (mw12554@hotmail.com)  
 
@@ -44,7 +44,8 @@ The LoRa nodes tested are:
 # Getting Started
 
 It is recommended to compile and start the single channel gateway with as little modificatons as possible. 
-This means that you should use the default settings in the configuration files as much as possible.
+This means that you should use the default settings in the configuration files as much as possible and 
+only change the SSID/Password for your WiFi setup and the pins of your ESP8266 that you use in loraModem.h.
 This section describes the minimum of configuration necessary to get a working gateway which than can be 
 configured further using the webpage.
 
@@ -169,6 +170,16 @@ responds to downlink messages for SF9-SF12 in the RX2 timeslot and with frequenc
 
 You are advised not to change the default setting of this parameter.
 
+### Enable OLED panel
+
+By setting the OLED you configure the system to work with OLED panels over I2C.
+Some panels work by both SPI and I2C where I2c is solwer. However, since SPI is use for RFM95 transceiver 
+communication you are stronly discouvared using one of these as they will not work with this software.
+Instead choose a OLED solution that works over I2C.
+
+ \#define OLED 1
+ 
+Setting the I2C SDA/SCL pins is done in the ESP-sc-gway.h file right after the #define of OLED.
 
 ### Setting TTN server
 
@@ -241,6 +252,7 @@ Note: When the WiFiManager software is enabled (it is by default) there must at 
 - Only the sx1276 (and HopeRF 95) radio modules are supported at this time. The sx1272 code should be 
 working without much work, but as I do not have one of these modules available I cannot test this.
 
+
 ## Webserver
 
 The built-in webserver can be used to display status and debugging information. 
@@ -253,7 +265,7 @@ The webserver shows various configuration settings as well as providing function
 The following parameters can be set using the webServer. 
 - Debug Level (0-4)
 - CAD mode on or off (STD mode)
-- Switch frequency hopping on and off
+- Switch frequency hopping on and off (Set to OFF)
 - When frequency Hopping is off: Select the frequency the gateway will work with. 
 NOTE: Frequency hopping is experimental and does not work correctly.
 - When CAD mode is off: Select the Spreading Factor (SF) the gateway will work with
@@ -277,7 +289,7 @@ make sure you install those libraries with the IDE:
 - AES library (taken from ideetron.nl) for downstream messages
 - Time
 
-For convenience, the libraries are also found in this gitshub repository in the libraries directory. 
+For convenience, the libraries are also found in this github repository in the libraries directory. 
 Please note that they are NOT part of the ESP 1channel gateway and may have their own licensing.
 However, these libraries are not part of the single-channel Gateway software.
 
@@ -293,10 +305,9 @@ The following things are still on my wish list to make to the single channel gat
 
 - Receive downstream message with commands form the server. These can be used to configure
   the gateway through downlink messages (such as setting the SF)
-- Implement over the Air updates
+- Support for ESP32 and RFM95 on 915 MHz
 - Use the SPIFFS for storing .css files
 - Use the SPIFFS for storing node data (for later analysis)
-- Get more reliable RSSI data out of the node in CAD mode (done, user PRSSI, testing)
 
 
 

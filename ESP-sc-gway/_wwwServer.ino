@@ -1,7 +1,7 @@
 // 1-channel LoRa Gateway for ESP8266
 // Copyright (c) 2016, 2017 Maarten Westenberg version for ESP8266
-// Version 4.0.7
-// Date: 2017-07-22
+// Version 4.0.8
+// Date: 2017-08-05
 //
 // 	based on work done by many people and making use of several libraries.
 //
@@ -228,6 +228,7 @@ static void setVariables(const char *cmd, const char *arg) {
 // ----------------------------------------------------------------------------
 static void openWebPage()
 {
+	++gwayConfig.views;									// increment number of views
 #if A_REFRESH==1
 	//server.client().stop();							// Experimental, stop webserver in case something is still running!
 #endif
@@ -266,9 +267,21 @@ static void openWebPage()
 
 	response +="Version: "; response+=VERSION;
 	response +="<br>ESP alive since "; 
-	stringTime(1, response); 
-	++gwayConfig.views;
-	response +=", Views: "; response+=String() + gwayConfig.views;
+	stringTime(1, response);
+
+	response +=", Uptime: ";
+	uint32_t secs = millis()/1000;
+	uint16_t days = secs / 86400;					// Determine number of days
+	uint8_t _hour   = hour(secs);
+	uint8_t _minute = minute(secs);
+	uint8_t _second = second(secs);
+	response += String() + days + "-";
+	if (_hour < 10) response += "0";
+	response += String() + _hour + ":";
+	if (_minute < 10) response += "0";
+	response += String() + _minute + ":";
+	if (_second < 10) response += "0";
+	response += String() + _second;
 	
 	response +="<br>Current time    "; 
 	stringTime(millis(), response); 
@@ -363,7 +376,7 @@ static void configData()
 	bg += ( (gwayConfig.node == 1) ? "LightGreen" : "orange" );
 	response +="<tr><td class=\"cell\">Gateway Node</td>";
 	response +="<td class=\"cell\" style=\"border: 1px solid black;" + bg + "\">";
-	response += ( (gwayConfig.node == 1) ? "ON" : "OFF" );
+	response += ( (gwayConfig.node == true) ? "ON" : "OFF" );
 	response +="<td style=\"border: 1px solid black; width:40px;\"><a href=\"NODE=1\"><button>ON</button></a></td>";
 	response +="<td style=\"border: 1px solid black; width:40px;\"><a href=\"NODE=0\"><button>OFF</button></a></td>";
 	response +="</tr>";
@@ -459,6 +472,11 @@ static void interruptData()
 		response +="<tr><td class=\"cell\">Re-entrant cntr</td>";
 		response +="<td class=\"cell\">"; 
 		response += String() + gwayConfig.reents;
+		response+="</td></tr>";
+
+		response +="<tr><td class=\"cell\">ntp call cntr</td>";
+		response +="<td class=\"cell\">"; 
+		response += String() + gwayConfig.ntps;
 		response+="</td></tr>";
 		
 		response +="<tr><td class=\"cell\">ntpErr cntr</td>";
@@ -757,9 +775,11 @@ void setupWWW()
 		gwayConfig.boots = 0;
 		gwayConfig.wifis = 0;
 		gwayConfig.views = 0;
-		gwayConfig.ntpErr = 0;
+		gwayConfig.ntpErr = 0;					// NTP errors
+		gwayConfig.ntps = 0;					// Number of NTP calls
 #endif
-		gwayConfig.reents = 0;
+		gwayConfig.reents = 0;					// Re-entrance
+
 		writeGwayCfg(CONFIGFILE);
 		server.sendHeader("Location", String("/"), true);
 		server.send ( 302, "text/plain", "");

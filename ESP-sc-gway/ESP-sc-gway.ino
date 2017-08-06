@@ -1,7 +1,7 @@
 // 1-channel LoRa Gateway for ESP8266
 // Copyright (c) 2016, 2017 Maarten Westenberg version for ESP8266
-// Version 4.0.7
-// Date: 2017-07-22
+// Version 4.0.8
+// Date: 2017-08-05
 // Author: Maarten Westenberg (mw12554@hotmail.com)
 //
 // 	based on work done by Thomas Telkamp for Raspberry PI 1-ch gateway
@@ -27,7 +27,8 @@
 
 //
 
-#include "ESP-sc-gway.h"						// This file contains configuration of GWay
+#include "ESP-sc-gway.h"					
+// This file contains configuration of GWay
 
 #include <Esp.h>
 #include <string.h>
@@ -39,19 +40,28 @@
 #include <sys/time.h>
 #include <cstring>
 #include <SPI.h>
-#include <TimeLib.h>						// http://playground.arduino.cc/code/time
+#include <TimeLib.h>							// http://playground.arduino.cc/code/time
 #include <ESP8266WiFi.h>
-#include <DNSServer.h> 						// Local DNSserver
+#include <DNSServer.h> 							// Local DNSserver
 #include "FS.h"
 #include <WiFiUdp.h>
 #include <pins_arduino.h>
 #include <ArduinoJson.h>
 #include <SimpleTimer.h>
-#include <gBase64.h>						// https://github.com/adamvr/arduino-base64 (changed the name)
+#include <gBase64.h>							// https://github.com/adamvr/arduino-base64 (changed the name)
 #include <ESP8266mDNS.h>
 
+extern "C" {
+#include "user_interface.h"
+#include "lwip/err.h"
+#include "lwip/dns.h"
+}
+
+#include "loraModem.h"
+#include "loraFiles.h"
+
 #if WIFIMANAGER>0
-#include <WiFiManager.h>					// Library for ESP WiFi config through an AP
+#include <WiFiManager.h>						// Library for ESP WiFi config through an AP
 #endif
 
 #if A_OTA==1
@@ -67,20 +77,16 @@
 #include "AES-128_V10.h"
 #endif
 
-extern "C" {
-#include "user_interface.h"
-#include "lwip/err.h"
-#include "lwip/dns.h"
-}
-
-#include "loraModem.h"
+#if OLED==1
+#include "SSD1306.h"
+SSD1306  display(0x3c, OLED_SSA, OLED_SCL);		// (i2c address of display(0x3c or 0x3d), SDA, SCL) on wemos
+#endif
 
 int debug=1;									// Debug level! 0 is no msgs, 1 normal, 2 extensive
 
 // You can switch webserver off if not necessary but probably better to leave it in.
 #if A_SERVER==1
 #include <Streaming.h>          				// http://arduiniana.org/libraries/streaming/
-//  String webPage;
   ESP8266WebServer server(A_SERVERPORT);
 #endif
 using namespace std;
@@ -131,6 +137,9 @@ uint32_t pulltime = 0;							// last time we sent a pull_data request to server
 uint32_t lastTmst = 0;
 #if A_SERVER==1
 uint32_t wwwtime = 0;
+#endif
+#if NTP_INTR==0
+uint32_t ntptimer = 0;
 #endif
 
 SimpleTimer timer; 								// Timer is needed for delayed sending
@@ -285,15 +294,15 @@ byte packetBuffer[NTP_PACKET_SIZE];
 void sendNTPpacket(IPAddress& timeServerIP) {
   // Zeroise the buffer.
 	memset(packetBuffer, 0, NTP_PACKET_SIZE);
-	packetBuffer[0] = 0b11100011;   			// LI, Version, Mode
-	packetBuffer[1] = 0;						// Stratum, or type of clock
-	packetBuffer[2] = 6;						// Polling Interval
-	packetBuffer[3] = 0xEC;						// Peer Clock Precision
+	packetBuffer[0]  = 0b11100011;   			// LI, Version, Mode
+	packetBuffer[1]  = 0;						// Stratum, or type of clock
+	packetBuffer[2]  = 6;						// Polling Interval
+	packetBuffer[3]  = 0xEC;						// Peer Clock Precision
 	// 8 bytes of zero for Root Delay & Root Dispersion
-	packetBuffer[12]  = 49;
-	packetBuffer[13]  = 0x4E;
-	packetBuffer[14]  = 49;
-	packetBuffer[15]  = 52;	
+	packetBuffer[12] = 49;
+	packetBuffer[13] = 0x4E;
+	packetBuffer[14] = 49;
+	packetBuffer[15] = 52;	
 
 	Udp.beginPacket(timeServerIP, (int) 123);	// NTP Server and Port
 
@@ -314,42 +323,45 @@ void sendNTPpacket(IPAddress& timeServerIP) {
 // ----------------------------------------------------------------------------
 time_t getNtpTime()
 {
-  WiFi.hostByName(NTP_TIMESERVER, ntpServer);	// Get IP address of Timeserver
-//  for (int i = 0 ; i < 4 ; i++) { 				// 5 retries, if unseccessful
+	gwayConfig.ntps++;
+	WiFi.hostByName(NTP_TIMESERVER, ntpServer);	// Get IP address of Timeserver
     sendNTPpacket(ntpServer);					// Send the request
     uint32_t beginWait = millis();
-    while (millis() - beginWait < 1600) 
+    while (millis() - beginWait < 1000) 
 	{
-	  int size = Udp.parsePacket();
-      if ( size >= NTP_PACKET_SIZE ) {
-        Udp.read(packetBuffer, NTP_PACKET_SIZE);
-        // Extract seconds portion.
-        unsigned long secs;
-		secs  = packetBuffer[40] << 24;
-		secs |= packetBuffer[41] << 16;
-		secs |= packetBuffer[42] <<  8;
-		secs |= packetBuffer[43];
-        Udp.flush();
-        return secs - 2208988800UL + NTP_TIMEZONES * SECS_PER_HOUR;				
-		// UTC is 1 TimeZone correction when no daylight saving time
-      }
+		int size = Udp.parsePacket();
+		if ( size >= NTP_PACKET_SIZE ) {
+			Udp.read(packetBuffer, NTP_PACKET_SIZE);
+			// Extract seconds portion.
+			unsigned long secs;
+			secs  = packetBuffer[40] << 24;
+			secs |= packetBuffer[41] << 16;
+			secs |= packetBuffer[42] <<  8;
+			secs |= packetBuffer[43];
+			Udp.flush();
+			return secs - 2208988800UL + NTP_TIMEZONES * SECS_PER_HOUR;				
+			// UTC is 1 TimeZone correction when no daylight saving time
+		}
+		delay(10);								// Wait 10 millisecs, allow kernel to act when necessary
     }
-//  }//for
 
-  // If we are here, we could not read the time from internet
-  // So increase the counter
-  gwayConfig.ntpErr++;
-  return 0; 									// return 0 if unable to get the time
+	Udp.flush();
+	
+	// If we are here, we could not read the time from internet
+	// So increase the counter
+	gwayConfig.ntpErr++;
+	return 0; 									// return 0 if unable to get the time
 }
 
 // ----------------------------------------------------------------------------
 // Set up regular synchronization of NTP server and the local time.
 // ----------------------------------------------------------------------------
+#if NTP_INTR==1
 void setupTime() {
   setSyncProvider(getNtpTime);
   setSyncInterval(_NTP_INTERVAL);
 }
-
+#endif
 
 
 // ============================================================================
@@ -894,7 +906,6 @@ void sendstat() {
 	}
 	
     //send the update
-	// delay(1);
     sendUdp(status_report, stat_index);
 	return;
 }
@@ -929,6 +940,16 @@ void setup () {
 		res = spi_flash_erase_sector(s);
 		os_printf("Sector erased 0x%02X. Res %d\n",s,res);
 	}
+#endif
+
+#if OLED==1
+	// Initialising the UI will init the display too.
+	display.init();
+	display.flipScreenVertically();
+	display.setFont(ArialMT_Plain_24);
+	display.setTextAlignment(TEXT_ALIGN_LEFT);
+	display.drawString(0, 24, "STARTING");
+	display.display();
 #endif
 
 	delay(500);
@@ -1012,8 +1033,10 @@ void setup () {
 	WiFi.hostByName(_THINGSERVER, thingServer);
 	delay(500);
 #endif
-	
+
+#if NTP_INTR==1
 	setupTime();											// Set NTP time host and interval
+#endif
 	setTime((time_t)getNtpTime());
 	while (timeStatus() == timeNotSet) {
 		Serial.println(F("setupTime:: Time not set (yet)"));
@@ -1061,7 +1084,16 @@ void setup () {
 	}
 	
 	writeConfig( CONFIGFILE, &gwayConfig);					// Write config
-	
+
+	// activate OLED dieplay
+#if OLED==1
+	  // Initialising the UI will init the display too.
+	  display.clear();
+	  display.setFont(ArialMT_Plain_24);
+	  display.drawString(0, 24, "READY");
+	  display.display();
+#endif
+
 	Serial.println(F("--------------------------------------"));
 }
 
@@ -1174,15 +1206,30 @@ void loop ()
     }
 	
 #if A_OTA==1
+	// Perform Over the Air (OTA) update if enabled and requested by user.
 	yield();
 	ArduinoOTA.handle();
 #endif
 
 #if A_SERVER==1
-	// Handle the WiFi server part of this sketch. Mainly used for administration of the node
+	// Handle the WiFi server part of this sketch. Mainly used for administration 
+	// and monitoring of the node
 	yield();
-	server.handleClient();
-	
+	server.handleClient();	
+#endif
+
+#if NTP_INTR==0
+	// Set the time in a manual way. Do not use setSyncProvider
+	// as this function may collide with SPI and other interrupts
+	yield();
+	nowseconds = (uint32_t) millis() /1000;
+	if (nowseconds - ntptimer >= _NTP_INTERVAL) {
+		yield();
+		time_t newTime;
+		newTime = (time_t)getNtpTime();
+		if (newTime != 0) setTime(newTime);
+		ntptimer = nowseconds;
+	}
 #endif
 	
 }

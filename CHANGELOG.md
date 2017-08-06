@@ -16,6 +16,11 @@ Maintained by Maarten Westenberg (mw12554@hotmail.com)
 
 # Release Notes
 
+New features in version 4.0.8 (August 05, 2017)
+
+- This release updates for memory leaks in NTP routines (see ESP-sc-gway.h file for NTP_INTR
+- OLED support contributed by Dorijan Morelj (based on Adreas Spies' release)
+
 New features in version 4.0.7 (July 22, 2017)
 
 - This release contains merely updates to memory leaks and patches to avoid chip resets etc.

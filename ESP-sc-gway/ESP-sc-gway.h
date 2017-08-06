@@ -1,10 +1,10 @@
 // 1-channel LoRa Gateway for ESP8266
 // Copyright (c) 2016, 2017 Maarten Westenberg version for ESP8266
-// Version 4.0.7
-// Date: 2017-07-21
+// Version 4.0.8
+// Date: 2017-08-06
 //
-// 	based on work done by Thomas Telkamp for Raspberry PI 1ch gateway
-//	and many others.
+// Based on work done by Thomas Telkamp for Raspberry PI 1ch gateway and many others.
+// Contibutions of Dorijan Morelj and Andreas Spies for OLED support.
 //
 // All rights reserved. This program and the accompanying materials
 // are made available under the terms of the MIT License
@@ -19,7 +19,7 @@
 //
 // ----------------------------------------------------------------------------------------
 
-#define VERSION " ! V. 4.0.7 Ota, Refresh, Sensor, Re=2, Hallard; 170721a"
+#define VERSION " ! V. 4.0.8 Ota, Refresh, Sensor, Re=2, Hallard; 170806a"
 
 // This value of DEBUG determines whether some parts of code get compiled.
 // Also this is the initial value of debug parameter. 
@@ -48,16 +48,29 @@
 #define _CAD 1
 
 
-// Definitions for the admin webserver
+// Definitions for the admin webserver.
+// A_SERVER determines whether or not the admin webpage is included in the sketch.
+// Normally, leave it in!
 #define A_SERVER 1				// Define local WebServer only if this define is set
 #define A_REFRESH 1				// Will the webserver refresh or not?
 #define A_SERVERPORT 80			// local webserver port
 #define A_MAXBUFSIZE 192		// Must be larger than 128, but small enough to work
 
-// Definitions for over the air updates
+// Definitions for over the air updates. At the moment we support OTA with IDE
+// Make sure that tou have installed Python version 2.7 and have Bonjour in your network.
+// Bonjour is included in iTunes (which is free) and OTA is recommended to install 
+// the firmware on your router witout having to be really close to the gateway and 
+// connect with USB.
 //
 #define A_OTA 1
 
+// We support two pin-out configurations out-of-the-box: HALLARD and COMPRESULT.
+// If you use one of these two, just set the parameter to the right value.
+// If your pin definitions are different, update the loraModem.h file to reflect these settings.
+//	1: HALLARD
+//	2: COMRESULT pin out
+//	3: Other, define your own in loraModem.h
+#define _PIN_OUT 1
 
 // Gather statistics on sensor and Wifi status
 // 0= No statistics
@@ -108,10 +121,6 @@
 //	functions to set/reset certain parameters from remote.
 #define GATEWAYMGT 1
 
-// Define the correct radio type that you are using
-#define CFG_sx1276_radio		
-//#define CFG_sx1272_radio
-
 // Name of he configfile in SPIFFs	filesystem
 // In this file we store the configuration and other relevant info that should
 // survive a reboot of the gateway		
@@ -132,7 +141,7 @@
 #define _TTNSERVER "router.eu.thethings.network"
 
 // If you have a second back-end server defined such as Semtech or loriot.io
-// your can define _THINGSPORT and _THINGSERVER with your own value.
+// your can define _THINGPORT and _THINGSERVER with your own value.
 // If not, make sure that you do not defined these.
 // Port is UDP port in this program
 
@@ -147,25 +156,31 @@
 #define _LON 5.800
 #define _ALT 14
 
-// Serial Port speed
-#define _BAUDRATE 115200		// Works for debug messages to serial momitor
-
 // ntp
 #define NTP_TIMESERVER "nl.pool.ntp.org"	// Country and region specific
 #define NTP_TIMEZONES	1		// How far is our Timezone from UTC (excl daylight saving/summer time)
 #define SECS_PER_HOUR	3600
-
-#if !defined(CFG_noassert)
-#define ASSERT(cond) if(!(cond)) gway_failed(__FILE__, __LINE__)
-#else
-#define ASSERT(cond) /**/
-#endif
+#define NTP_INTR 0							// Do NTP processing with interrupts or in loop();
 
 #if GATEWAYNODE==1
 #define _DEVADDR { 0x26, 0x01, 0x15, 0x3D }
 #define _APPSKEY { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }
 #define _NWKSKEY { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }
 #define _SENSOR_INTERVAL 300
+#endif
+
+// Define the correct radio type that you are using
+#define CFG_sx1276_radio		
+//#define CFG_sx1272_radio
+
+// Serial Port speed
+#define _BAUDRATE 115200					// Works for debug messages to serial momitor
+
+// if OLED Display is connected to i2c
+#define OLED 0								// Make define 1 on line if you have an OLED display connected
+#if OLED==1
+#define OLED_SCL 5							// GPIO5 / D1
+#define OLED_SDA 4							// GPIO4 / D2
 #endif
 
 
@@ -182,36 +197,20 @@ struct wpas {
 
 // Please fill in at least ONE SSID and password from your own WiFI network
 // below. This is needed to get the gateway working
-// Note: DO NOT use the first and the last line of the stucture, these should be empty.
+// Note: DO NOT use the first and the last line of the stucture, these should be empty strings and
+//	the first line in te struct is reserved for WifiManager.
+//
 wpas wpa[] = {
 	{ "" , "" },								// Reserved for WiFi Manager
 	{ "your_router_1", "1st_password"},
 	{ "your_router_2", "2nd_password"},
 	{ "", ""}									// spare line
-};
+};	
 
-// Definition of the configuration record that is read at startup and written
-// when settings are changed.
-struct espGwayConfig {
-	uint16_t fcnt;				// =0 as init value	XXX Could be 32 bit in size
-	uint16_t boots;				// Number of restarts made by the gateway after reset
-	uint16_t resets;			// Number of statistics resets
-	uint16_t views;				// Number of sendWebPage() calls
-	uint16_t wifis;				// Number of WiFi Setups
-	uint16_t reents;			// Number of re-entrant interrupt handler calls
-	uint16_t ntpErr;			// Number of UTP requests that failed
-	
-	uint8_t ch;					// index to freqs array, freqs[ifreq]=868100000 default
-	uint8_t sf;					// range from SF7 to SF12
-	uint8_t debug;				// range 0 to 4
-	
-	bool cad;					// is CAD enabled?
-	bool hop;					// Is HOP enabled (Note: SHould be disabled)
-	bool node;					// Is gateway node enabled
-	bool refresh;				// Is WWW browser refresh enabled
-	
-	String ssid;				// SSID of the last connected WiFi Network
-	String pass;				// Password
-} gwayConfig;
-
-
+// For asserting and testing the following defines are used.
+//
+#if !defined(CFG_noassert)
+#define ASSERT(cond) if(!(cond)) gway_failed(__FILE__, __LINE__)
+#else
+#define ASSERT(cond) /**/
+#endif

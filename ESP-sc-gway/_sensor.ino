@@ -1,7 +1,7 @@
 // 1-channel LoRa Gateway for ESP8266
 // Copyright (c) 2016, 2017 Maarten Westenberg
-// Verison 4.0.7
-// Date: 2017-07-22
+// Verison 4.0.8
+// Date: 2017-08-05
 //
 // All rights reserved. This program and the accompanying materials
 // are made available under the terms of the MIT License
@@ -31,10 +31,10 @@ unsigned char DevAddr[4]  = _DEVADDR ;				// see ESP-sc-gway.h
 // Find some sensible sensor values for LoRa radio and read them below in separate function
 //
 // ----------------------------------------------------------------------------
-uint8_t readInternal(uint8_t reg) {
-
-	return 0;
-}
+//uint8_t readInternal(uint8_t reg) {
+//
+//	return 0;
+//}
 
 
 // ----------------------------------------------------------------------------
@@ -53,10 +53,10 @@ uint8_t readInternal(uint8_t reg) {
 static int LoRaSensors(uint8_t *buf) {
 
 	uint8_t internalSersors;
-	internalSersors = readInternal(0x1A);
-	if (internalSersors > 0) {		
-		return (internalSersors);
-	}
+	//internalSersors = readInternal(0x1A);
+	//if (internalSersors > 0) {		
+	//	return (internalSersors);
+	//}
 	
 	
 	buf[0] = 0x86;									// 134; User code <lCode + len==3 + Parity
