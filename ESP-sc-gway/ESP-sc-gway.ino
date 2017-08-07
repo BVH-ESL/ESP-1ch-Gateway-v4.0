@@ -79,7 +79,7 @@ extern "C" {
 
 #if OLED==1
 #include "SSD1306.h"
-SSD1306  display(0x3c, OLED_SSA, OLED_SCL);		// (i2c address of display(0x3c or 0x3d), SDA, SCL) on wemos
+SSD1306  display(0x3c, OLED_SDA, OLED_SCL);		// (i2c address of display(0x3c or 0x3d), SDA, SCL) on wemos
 #endif
 
 int debug=1;									// Debug level! 0 is no msgs, 1 normal, 2 extensive
