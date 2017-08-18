@@ -102,9 +102,21 @@ struct pins {
 	uint8_t ss=15;		// GPIO15 / D8. Select pin connected to SPIO16
 	uint8_t rst=0;		// GPIO0 / D3. Reset pin not used	
 } pins;
+#elif _PIN_OUT==3
+struct pins {
+  uint8_t dio0=15;  // GPIO15 / D8. For the Hallard board shared between DIO0/DIO1/DIO2
+  uint8_t dio1=15;  // GPIO15 / D8. Used for CAD, may or not be shared with DIO0
+  uint8_t dio2=15;  // GPIO15 / D8. Used for frequency hopping, don't care
+  uint8_t ss=D3;    // GPIO0 / D3. Select pin connected to SPIO16 / D0
+  uint8_t rst=0;    // GPIO0 / D3. Reset pin not used 
+  // MISO 12 / D6
+  // MOSI 13 / D7
+  // CLK  14 / D5
+  // SS   0 / D3
+} pins;
 #else
 	// Use your own pin definitions
-#error "Pin Definitions _PIN_OUT must be 1(HALLARD) or 2 (COMRESULT)"
+#error "Pin Definitions _PIN_OUT must be 1(HALLARD) or 2 (COMRESULT) or 3 (MARCOBRIANZA)"
 #endif
 
 // STATR contains the statictis that are kept by message. 
