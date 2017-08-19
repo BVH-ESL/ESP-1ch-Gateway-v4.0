@@ -35,7 +35,7 @@
 // This parameters contains the default value of SF, the actual version can be set with
 // the webserver and it will be stored in SPIFF
 // NOTE: The frequency is set in the loraModem.h file and is default 868.100000 MHz.
-#define _SPREADING SF9
+#define _SPREADING SF7
 
 
 // Channel Activity Detection
@@ -69,8 +69,9 @@
 // If your pin definitions are different, update the loraModem.h file to reflect these settings.
 //	1: HALLARD
 //	2: COMRESULT pin out
-//	3: Other, define your own in loraModem.h
-#define _PIN_OUT 1
+//  3: MARCOBRIANZA
+//	4: Other, define your own in loraModem.h
+#define _PIN_OUT 3
 
 // Gather statistics on sensor and Wifi status
 // 0= No statistics
@@ -106,7 +107,7 @@
 // after all, a gateway can be a node to the system as well
 // Set its LoRa address and key below in this file
 // See spec. para 4.3.2
-#define GATEWAYNODE 1
+#define GATEWAYNODE 0
 #define _CHECK_MIC 0
 
 
@@ -119,7 +120,7 @@
 // NOTE: Be aware that these messages are NOT LoRa and NOT LoRa Gateway spec compliant.
 //	However that should not interfere with regular gateway operation but instead offer 
 //	functions to set/reset certain parameters from remote.
-#define GATEWAYMGT 1
+#define GATEWAYMGT 0
 
 // Name of he configfile in SPIFFs	filesystem
 // In this file we store the configuration and other relevant info that should
@@ -177,7 +178,7 @@
 #define _BAUDRATE 115200					// Works for debug messages to serial momitor
 
 // if OLED Display is connected to i2c
-#define OLED 0								// Make define 1 on line if you have an OLED display connected
+#define OLED 1								// Make define 1 on line if you have an OLED display connected
 #if OLED==1
 #define OLED_SCL 5							// GPIO5 / D1
 #define OLED_SDA 4							// GPIO4 / D2
