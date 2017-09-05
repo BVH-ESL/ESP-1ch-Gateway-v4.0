@@ -82,7 +82,12 @@ extern "C" {
 SSD1306  display(0x3c, OLED_SDA, OLED_SCL);		// (i2c address of display(0x3c or 0x3d), SDA, SCL) on wemos
 #endif
 
-int debug=1;									// Debug level! 0 is no msgs, 1 normal, 2 extensive
+#if OLED==2
+#include "SSD1306.h"
+SSD1306  display(0x3c, OLED_SDA, OLED_SCL,64,48);    // (i2c address of display(0x3c or 0x3d), SDA, SCL) on wemos
+#endif
+
+int debug = 1;									// Debug level! 0 is no msgs, 1 normal, 2 extensive
 
 // You can switch webserver off if not necessary but probably better to leave it in.
 #if A_SERVER==1
@@ -974,6 +979,15 @@ void setup () {
 	// We start by connecting to a WiFi network, set hostname
 	char hostname[12];
 	sprintf(hostname, "%s%02x%02x%02x", "esp8266-", MAC_array[3], MAC_array[4], MAC_array[5]);
+#if OLED==2
+  // Initialising the UI will init the display too.
+  display.init();
+  display.flipScreenVertically();
+  display.setFont(ArialMT_Plain_10);
+  display.setTextAlignment(TEXT_ALIGN_LEFT);
+  display.drawString(6, 20, "STARTING");
+  display.display();
+#endif
 
 	wifi_station_set_hostname( hostname );
 	
@@ -1095,6 +1109,14 @@ void setup () {
 #endif
 
 	Serial.println(F("--------------------------------------"));
+#if OLED==2
+  display.clear();
+  display.setFont(ArialMT_Plain_10);
+  display.drawString(14, 20, "READY");
+  display.display();
+#endif
+
+  Serial.println(F("--------------------------------------"));
 }
 
 

@@ -178,11 +178,13 @@
 #define _BAUDRATE 115200					// Works for debug messages to serial momitor
 
 // if OLED Display is connected to i2c
-#define OLED 1								// Make define 1 on line if you have an OLED display connected
-#if OLED==1
+// OLED 2 requires this updated library that is resolution independent https://github.com/DaveRichmond/esp8266-oled-ssd1306
+#define OLED 2								// Make define 1 or 2 on line if you have an OLED display connected 1=128x64 2=64*48
+#if OLED>0
 #define OLED_SCL 5							// GPIO5 / D1
 #define OLED_SDA 4							// GPIO4 / D2
 #endif
+
 
 
 // Wifi definitions

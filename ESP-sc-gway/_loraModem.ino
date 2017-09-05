@@ -856,6 +856,24 @@ int buildPacket(uint32_t tmst, uint8_t *buff_up, uint8_t *message, char messageL
       display.drawString(40, 48, String((int)messageLength) );
       display.display();
 #endif
+
+#if OLED==2
+      display.clear();
+      display.setFont(ArialMT_Plain_10);
+      display.setTextAlignment(TEXT_ALIGN_LEFT);
+      char timBuff[20];
+      sprintf(timBuff, "%02i:%02i:%02i", hour(), minute(), second());
+      //display.drawString(0, 0, "Time: " );
+      display.drawString(0, 0, timBuff);
+      display.drawString(0, 14, "RSSI: " );
+      display.drawString(30, 14, String(prssi-rssicorr));
+      display.drawString(0, 26, "SNR: " );
+      display.drawString(30, 26, String(SNR) );
+      display.drawString(0, 38, "LEN: " );
+      display.drawString(30, 38, String((int)messageLength) );
+      display.display();
+#endif
+
 			
 	int j;
 	// XXX Base64 library is nopad. So we may have to add padding characters until
