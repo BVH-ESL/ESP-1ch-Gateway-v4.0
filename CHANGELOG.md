@@ -13,7 +13,8 @@ without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 Maintained by Maarten Westenberg (mw12554@hotmail.com)
 
 
-#Notes for branch LoraNode_1.3
+# Notes for branch LoraNode_1.3
+
 The branch [https://github.com/marcobrianza/ESP-1ch-Gateway-v4.0/tree/LoraNode_1.3]()
 adds support for the wemos compatible shield LoraNode 1.3 [https://github.com/marcobrianza/Lora_Node_1.3]()
 
