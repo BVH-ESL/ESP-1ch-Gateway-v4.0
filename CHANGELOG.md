@@ -18,8 +18,9 @@ Maintained by Maarten Westenberg (mw12554@hotmail.com)
 The branch [https://github.com/marcobrianza/ESP-1ch-Gateway-v4.0/tree/LoraNode_1.3]()
 adds support for the wemos compatible shield LoraNode 1.3 [https://github.com/marcobrianza/Lora_Node_1.3]()
 
-To use set the option: #define _PIN_OUT 3 in ESP-sc-gway-h
-the wemos oled display is also supported (#define OLED 2) and required this library branch to support 64x48 resolution [https://github.com/marcobrianza/esp8266-oled-ssd1306]()
+To use set the option: #define _PIN_OUT 3 in ESP-sc-gway.h  
+The wemos OLED display is also supported (#define OLED 2)  
+It requires this library branch to support 64x48 resolution [https://github.com/marcobrianza/esp8266-oled-ssd1306]()
 
 
 ![SC Gateway on LoraNode 1.3](img/scgln13.jpg?raw=true "SC Gateway on LoraNode 1.3")                                            
