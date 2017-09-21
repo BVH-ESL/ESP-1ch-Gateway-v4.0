@@ -82,6 +82,7 @@ extern "C" {
 SSD1306  display(0x3c, OLED_SDA, OLED_SCL);		// (i2c address of display(0x3c or 0x3d), SDA, SCL) on wemos
 #endif
 
+//wemos oled requires this library branch that supports 64x48 pixels https://github.com/marcobrianza/esp8266-oled-ssd1306
 #if OLED==2
 #include "SSD1306.h"
 SSD1306  display(0x3c, OLED_SDA, OLED_SCL,64,48);    // (i2c address of display(0x3c or 0x3d), SDA, SCL) on wemos
