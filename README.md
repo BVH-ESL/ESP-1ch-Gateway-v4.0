@@ -12,6 +12,16 @@ without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 
 Maintained by Maarten Westenberg (mw12554@hotmail.com)
 
+# Notes for branch LoraNode_1.3
+
+To use the gateway with [Loranode_1.3](https://github.com/marcobrianza/Lora_Node_1.3) Board  
+use this branch   [https://github.com/marcobrianza/ESP-1ch-Gateway-v4.0/tree/LoraNode_1.3](https://github.com/marcobrianza/ESP-1ch-Gateway-v4.0/tree/LoraNode_1.3)
+
+
+Set the option: #define _PIN_OUT 3 in ESP-sc-gway.h  
+The WeMos OLED display is also supported (#define OLED 2)  
+It requires this library branch to support 64x48 display resolution [https://github.com/marcobrianza/esp8266-oled-ssd1306](https://github.com/marcobrianza/esp8266-oled-ssd1306)
+
 
 # Description
 
